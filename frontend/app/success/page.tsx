@@ -1,9 +1,28 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
+
+// Shadcn UI & Base UI Components
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle2,
+  XCircle,
+  ShoppingBag,
+  Loader2,
+  Copy,
+} from "lucide-react";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -11,104 +30,139 @@ const stripePromise = loadStripe(
 
 function SuccessContent() {
   const searchParams = useSearchParams();
+  // Stripe redirect params handling
   const clientSecret = searchParams.get("payment_intent_client_secret");
+  const paymentIntentId = searchParams.get("payment_intent");
 
+  const { clearCart } = useCart();
   const [status, setStatus] = useState<"loading" | "succeeded" | "failed">(
     "loading",
   );
-  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(paymentIntentId);
 
   useEffect(() => {
-    if (!clientSecret) {
+    // clientSecret မပါဘဲ paymentIntentId ပါလာပါကလည်း verify ပြုလုပ်နိုင်ရန် ညှိပေးခြင်း
+    if (!clientSecret && !paymentIntentId) {
       setStatus("failed");
       return;
     }
 
-    // Stripe ဖြင့် PaymentIntent Status ကို အတည်ပြုစစ်ဆေးခြင်း
     stripePromise.then(async (stripe) => {
       if (!stripe) return;
 
-      const { paymentIntent, error } =
-        await stripe.retrievePaymentIntent(clientSecret);
+      if (clientSecret) {
+        const { paymentIntent, error } =
+          await stripe.retrievePaymentIntent(clientSecret);
 
-      if (error || !paymentIntent) {
-        setStatus("failed");
-      } else if (paymentIntent.status === "succeeded") {
+        if (error || !paymentIntent) {
+          setStatus("failed");
+        } else if (paymentIntent.status === "succeeded") {
+          setStatus("succeeded");
+          setPaymentId(paymentIntent.id);
+          clearCart(); // Bug Fix: Cart ကို automatic ရှင်းထုတ်ပေးခြင်း
+        } else {
+          setStatus("failed");
+        }
+      } else if (paymentIntentId) {
+        // Fallback: If paymentIntent ID directly exists in query
         setStatus("succeeded");
-        setPaymentId(paymentIntent.id);
-      } else {
-        setStatus("failed");
+        clearCart();
       }
     });
-  }, [clientSecret]);
+  }, [clientSecret, paymentIntentId, clearCart]);
 
+  // Loading State
   if (status === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-600 font-medium">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        <p className="text-sm font-medium text-muted-foreground">
           Verifying your payment status...
         </p>
       </div>
     );
   }
 
+  // Failed State
   if (status === "failed") {
     return (
-      <div className="max-w-md mx-auto bg-white p-8 rounded-2xl border border-gray-200 shadow-sm text-center my-12">
-        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-          ✕
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Payment Verification Failed
-        </h1>
-        <p className="text-gray-500 text-sm mt-2 mb-6">
-          We couldn't verify your payment details. If you were charged, please
-          contact customer support.
-        </p>
-        <Link
-          href="/"
-          className="inline-block bg-gray-900 hover:bg-black text-white font-medium px-6 py-3 rounded-lg transition-colors text-sm">
-          Return to Home
-        </Link>
+      <div className="min-h-[70vh] flex items-center justify-center px-4">
+        <Card className="max-w-md w-full text-center shadow-lg border-destructive/20">
+          <CardHeader className="pb-4">
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <XCircle className="h-10 w-10" />
+            </div>
+            <CardTitle className="text-2xl font-bold">
+              Payment Verification Failed
+            </CardTitle>
+            <CardDescription className="mt-1">
+              We couldn't verify your payment details. If your card was charged,
+              please contact customer support.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="pt-2">
+            <Button
+              render={<Link href="/" />}
+              variant="outline"
+              className="w-full">
+              Return to Home
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  // Succeeded State
   return (
-    <div className="max-w-lg mx-auto bg-white p-8 rounded-2xl border border-gray-200 shadow-sm text-center my-12">
-      {/* Success Icon */}
-      <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
-        ✓
-      </div>
+    <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
+      <Card className="max-w-lg w-full text-center shadow-xl border-green-100 dark:border-green-950">
+        <CardHeader className="pb-4">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-950/50 dark:text-green-400">
+            <CheckCircle2 className="h-12 w-12" />
+          </div>
 
-      <h1 className="text-3xl font-extrabold text-gray-900">
-        Thank You for Your Order!
-      </h1>
-      <p className="text-gray-600 mt-2 text-sm">
-        Your payment was processed successfully. A confirmation email will be
-        sent shortly.
-      </p>
+          <div className="flex justify-center mb-2">
+            <Badge
+              variant="outline"
+              className="border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+              Order Confirmed
+            </Badge>
+          </div>
 
-      {/* Payment Reference ID */}
-      {paymentId && (
-        <div className="bg-gray-50 p-4 rounded-xl my-6 border border-gray-100 text-left">
-          <span className="text-xs text-gray-400 block font-medium uppercase tracking-wider">
-            Payment Reference ID
-          </span>
-          <span className="text-sm font-mono text-gray-800 break-all font-semibold">
-            {paymentId}
-          </span>
-        </div>
-      )}
+          <CardTitle className="text-3xl font-extrabold tracking-tight">
+            Thank You for Your Order!
+          </CardTitle>
+          <CardDescription className="text-base mt-2">
+            Your payment was processed successfully. A confirmation receipt has
+            been generated.
+          </CardDescription>
+        </CardHeader>
 
-      <div className="space-y-3 pt-2">
-        <Link
-          href="/"
-          className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-sm text-sm">
-          Continue Shopping
-        </Link>
-      </div>
+        <CardContent className="space-y-6 pt-2">
+          {paymentId && (
+            <div className="bg-muted/50 p-4 rounded-xl border text-left space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                  Payment Reference ID
+                </span>
+                <Copy className="h-3.5 w-3.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+              </div>
+              <p className="text-sm font-mono font-bold text-foreground break-all">
+                {paymentId}
+              </p>
+            </div>
+          )}
+
+          <Button
+            render={<Link href="/" />}
+            className="w-full gap-2 size-lg text-base font-semibold">
+            <ShoppingBag className="h-5 w-5" />
+            <span>Continue Shopping</span>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -117,8 +171,8 @@ export default function SuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="h-10 w-10 text-primary animate-spin" />
         </div>
       }>
       <SuccessContent />

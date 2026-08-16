@@ -6,16 +6,17 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { useCart } from "@/context/CartContext";
+
+// Shadcn UI & Base UI Components
+import { Button } from "@/components/ui/button";
+import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 
 export default function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
-  const { clearCart } = useCart();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,61 +28,62 @@ export default function CheckoutForm() {
     setIsProcessing(true);
     setErrorMessage(null);
 
-    // Stripe ဖြင့် ငွေပေးချေမှုကို အတည်ပြုခြင်း
-    const { error, paymentIntent } = await stripe.confirmPayment({
+    // Dynamic Origin URL ကို ရယူခြင်း (Localhost သို့မဟုတ် Production Domain)
+    const redirectUrl = `${window.location.origin}/success`;
+
+    // Stripe ဖြင့် Payment ကို Confirm ပြုလုပ်ခြင်း
+    const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // Payment အဆင်ပြေပါက success page သို့ redirect ပြုလုပ်ပါမည်
-        return_url: `${window.location.origin}/success`,
+        return_url: redirectUrl,
       },
-      redirect: "if_required", // Page redirect မလိုအပ်ဘဲ client-side တွင် ကိုင်တွယ်ရန်
     });
 
+    // Error ရှိပါကသာ ဤနေရာသို့ ရောက်ရှိမည် ဖြစ်ပြီး အောင်မြင်ပါက /success သို့ အလိုအလျောက် Redirect ဖြစ်သွားမည်
     if (error) {
-      setErrorMessage(error.message || "An unexpected error occurred.");
-      setIsProcessing(false);
-    } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      setIsCompleted(true);
-      clearCart(); // Payment ပြီးမြောက်ပါက Cart ကို ရှင်းထုတ်မည်
+      if (error.type === "card_error" || error.type === "validation_error") {
+        setErrorMessage(
+          error.message || "An error occurred with your payment.",
+        );
+      } else {
+        setErrorMessage("An unexpected error occurred. Please try again.");
+      }
       setIsProcessing(false);
     }
   };
 
-  if (isCompleted) {
-    return (
-      <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-xl text-center">
-        <h3 className="text-xl font-bold mb-2">🎉 Payment Successful!</h3>
-        <p className="text-sm">
-          Thank you for your purchase. Your order is being processed.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Stripe Payment Element (Card, Apple Pay, etc.) */}
-      <PaymentElement />
+      {/* Stripe Payment Element */}
+      <div className="p-4 rounded-xl border bg-card text-card-foreground shadow-sm">
+        <PaymentElement />
+      </div>
 
+      {/* Error Message Display */}
       {errorMessage && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg">
-          {errorMessage}
+        <div className="flex items-center gap-2 p-3.5 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-sm font-medium">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      <button
+      {/* Submit Button using Base UI Button Component */}
+      <Button
         type="submit"
         disabled={!stripe || isProcessing}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex items-center justify-center">
+        className="w-full h-11 text-base font-semibold shadow-md gap-2">
         {isProcessing ? (
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
             <span>Processing Payment...</span>
-          </div>
+          </>
         ) : (
-          "Pay Now"
+          <>
+            <ShieldCheck className="h-5 w-5" />
+            <span>Pay Now</span>
+          </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

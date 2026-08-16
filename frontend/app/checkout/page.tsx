@@ -8,6 +8,24 @@ import axios from "axios";
 import CheckoutForm from "@/components/CheckoutForm";
 import Link from "next/link";
 
+// Shadcn UI Components
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 // Stripe Publishable Key ကို Load လုပ်ပါ
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
@@ -49,18 +67,25 @@ export default function CheckoutPage() {
     }
   }, [totalPrice]);
 
+  // Cart ကွန်တိန်နာ ထဲတွင် ပစ္စည်းမရှိသေးပါက ပြသမည့် UI
   if (cart.length === 0) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
-        <h2 className="text-2xl font-bold text-gray-800">Your Cart is Empty</h2>
-        <p className="text-gray-500 mt-2 mb-6">
-          Looks like you haven't added any products yet.
-        </p>
-        <Link
-          href="/"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors shadow-sm">
-          Return to Shop
-        </Link>
+        <Card className="max-w-md w-full text-center p-6 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              Your Cart is Empty
+            </CardTitle>
+            <CardDescription className="mt-2">
+              Looks like you haven't added any products to your cart yet.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <Button render={<Link href="/" />} className="w-full">
+              Return to Shop
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -70,101 +95,143 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Side: Cart Items Summary */}
+        {/* Left Side: Cart Items Summary with Shadcn Table */}
         <div className="lg:col-span-7 space-y-4">
-          <h2 className="text-xl font-bold text-gray-800 border-b pb-3">
-            Order Summary
-          </h2>
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">Order Summary</CardTitle>
+              <CardDescription>
+                Review your selected items and quantities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-center">Quantity</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cart.map((item) => (
+                    <TableRow key={item._id}>
+                      {/* Product Info */}
+                      <TableCell className="font-medium">
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-12 h-12 object-cover rounded-md bg-muted"
+                          />
+                          <div>
+                            <span className="font-bold text-sm block line-clamp-1">
+                              {item.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              ${item.price.toFixed(2)} each
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
 
-          <div className="divide-y divide-gray-200">
-            {cart.map((item) => (
-              <div
-                key={item._id}
-                className="py-4 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-16 h-16 object-cover rounded-lg bg-gray-100"
-                  />
-                  <div>
-                    <h3 className="font-bold text-gray-800 text-sm sm:text-base">
-                      {item.name}
-                    </h3>
-                    <p className="text-blue-600 font-bold text-sm mt-1">
-                      ${item.price.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
+                      {/* Quantity Controls */}
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() =>
+                              updateQuantity(item._id, item.quantity - 1)
+                            }>
+                            -
+                          </Button>
+                          <span className="w-8 text-center text-sm font-semibold">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() =>
+                              updateQuantity(item._id, item.quantity + 1)
+                            }>
+                            +
+                          </Button>
+                        </div>
+                      </TableCell>
 
-                {/* Quantity Controls */}
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() =>
-                        updateQuantity(item._id, item.quantity - 1)
-                      }
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm">
-                      -
-                    </button>
-                    <span className="px-3 py-1 font-semibold text-sm text-gray-800">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() =>
-                        updateQuantity(item._id, item.quantity + 1)
-                      }
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm">
-                      +
-                    </button>
-                  </div>
+                      {/* Subtotal Price */}
+                      <TableCell className="text-right font-bold text-primary">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </TableCell>
 
-                  <button
-                    onClick={() => removeFromCart(item._id)}
-                    className="text-red-500 hover:text-red-700 text-sm font-medium p-1">
-                    Remove
-                  </button>
-                </div>
+                      {/* Remove Button */}
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => removeFromCart(item._id)}>
+                          Remove
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Total Amount Footer */}
+              <div className="pt-6 mt-4 border-t flex justify-between items-center">
+                <span className="text-base font-semibold text-muted-foreground">
+                  Total Amount:
+                </span>
+                <span className="text-2xl font-extrabold text-blue-600">
+                  ${totalPrice.toFixed(2)}
+                </span>
               </div>
-            ))}
-          </div>
-
-          <div className="pt-4 border-t border-gray-200 flex justify-between items-center text-lg font-bold text-gray-900">
-            <span>Total Amount:</span>
-            <span className="text-2xl text-blue-600">
-              ${totalPrice.toFixed(2)}
-            </span>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Right Side: Stripe Payment Integration */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm h-fit">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
-            Payment Details
-          </h2>
+        {/* Right Side: Stripe Payment Integration with Shadcn Card */}
+        <div className="lg:col-span-5">
+          <Card className="shadow-sm sticky top-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">
+                Payment Details
+              </CardTitle>
+              <CardDescription>
+                Enter your payment information below
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingSecret && (
+                <div className="py-12 flex flex-col items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-gray-500 text-sm mt-3">
+                    Initializing Stripe Payment...
+                  </p>
+                </div>
+              )}
 
-          {loadingSecret && (
-            <div className="py-12 flex flex-col items-center justify-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-gray-500 text-sm mt-3">
-                Initializing Stripe Payment...
-              </p>
-            </div>
-          )}
+              {fetchError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-sm">
+                  {fetchError}
+                </div>
+              )}
 
-          {fetchError && (
-            <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-sm">
-              {fetchError}
-            </div>
-          )}
-
-          {clientSecret && !loadingSecret && (
-            <Elements
-              stripe={stripePromise}
-              options={{ clientSecret, appearance: { theme: "stripe" } }}>
-              <CheckoutForm />
-            </Elements>
-          )}
+              {clientSecret && !loadingSecret && (
+                <Elements
+                  stripe={stripePromise}
+                  options={{ clientSecret, appearance: { theme: "stripe" } }}>
+                  <CheckoutForm />
+                </Elements>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

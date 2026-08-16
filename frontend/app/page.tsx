@@ -5,79 +5,113 @@ import axios from "axios";
 import { Product } from "@/types";
 import ProductCard from "@/components/ProductCard";
 
+// Shadcn UI & Base UI Components
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PackageSearch, AlertCircle, Sparkles, RefreshCw } from "lucide-react";
+
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Backend Express API မှ ဒေတာများ ယူဆောင်ခြင်း
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        // Express Backend API Endpoint သို့ တောင်းဆိုခြင်း
-        const response = await axios.get<Product[]>(
-          "http://localhost:5000/api/products",
-        );
-        setProducts(response.data);
-      } catch (err: any) {
-        console.error("Fetch error:", err);
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            "Failed to fetch products",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get<Product[]>(
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/products"
+      );
+      setProducts(response.data);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to fetch products"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProducts();
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Page Header */}
-        <div className="mb-10 text-center sm:text-left">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-            Explore Products
+    <main className="min-h-screen bg-background py-10 px-4 sm:px-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Page Header / Hero Section */}
+        <div className="flex flex-col items-center sm:items-start space-y-3 border-b pb-6">
+          <Badge variant="outline" className="gap-1 px-3 py-1 text-xs">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span>MongoDB & Express Powered</span>
+          </Badge>
+
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+            Explore Our Products
           </h1>
-          <p className="text-gray-600 mt-2">
-            Fetching real-time data from MongoDB via Express API
+
+          <p className="text-muted-foreground text-sm sm:text-base max-w-2xl">
+            Discover real-time items fetched directly from our API. High quality products curated just for you.
           </p>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State (Skeleton Grid) */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-600 font-medium">
-              Loading products from database...
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="space-y-3">
+                <Skeleton className="h-48 w-full rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))}
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-lg mx-auto text-center">
-            <p className="font-semibold">Error Loading Products</p>
-            <p className="text-sm mt-1">{error}</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="flex items-center gap-3 p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive max-w-lg w-full">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold">Error Loading Products</p>
+                <p className="text-xs opacity-90">{error}</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={fetchProducts} className="gap-1">
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Retry</span>
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Product Grid Display */}
+        {/* Product Grid / Empty State */}
         {!loading && !error && (
           <>
             {products.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
-                <p className="text-gray-500 text-lg">
-                  No products found in the database.
-                </p>
-                <p className="text-gray-400 text-sm mt-1">
-                  Please run `npm run seed` in your backend.
-                </p>
-              </div>
+              <Card className="text-center py-16 max-w-lg mx-auto shadow-sm">
+                <CardContent className="space-y-4">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                    <PackageSearch className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">No Products Found</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      There are no items currently in the database. Please run <code className="bg-muted px-1.5 py-0.5 rounded text-foreground font-mono">npm run seed</code> in your backend repository.
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={fetchProducts} className="gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Refresh Data</span>
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {products.map((product) => (
@@ -87,6 +121,7 @@ export default function HomePage() {
             )}
           </>
         )}
+
       </div>
     </main>
   );

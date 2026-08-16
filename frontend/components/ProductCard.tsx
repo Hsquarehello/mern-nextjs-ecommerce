@@ -1,7 +1,10 @@
-"use client";
+'use client';
 
-import { useCart } from "@/context/CartContext";
-import { Product } from "@/types";
+import React from 'react';
+import { Product } from '@/types';
+import { useCart } from '@/context/CartContext';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface ProductCardProps {
   product: Product;
@@ -11,10 +14,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
 
   return (
-    <div className="border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 p-5 flex flex-col justify-between bg-white">
+    <Card className="flex flex-col justify-between overflow-hidden hover:shadow-lg transition-shadow">
       <div>
         {/* Product Image */}
-        <div className="w-full h-48 overflow-hidden rounded-lg mb-4 bg-gray-100">
+        <div className="w-full h-48 overflow-hidden bg-muted">
           <img
             src={product.imageUrl}
             alt={product.name}
@@ -22,33 +25,31 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         </div>
 
-        {/* Product Name */}
-        <h3 className="text-lg font-bold text-gray-800 line-clamp-1">
-          {product.name}
-        </h3>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-lg font-semibold line-clamp-1">
+            {product.name}
+          </CardTitle>
+        </CardHeader>
 
-        {/* Product Description */}
-        <p className="text-gray-500 text-sm mt-2 line-clamp-2 leading-relaxed">
-          {product.description}
-        </p>
+        <CardContent className="p-4 pt-0">
+          <p className="text-muted-foreground text-sm line-clamp-2">
+            {product.description}
+          </p>
+        </CardContent>
       </div>
 
-      <div className="mt-6 flex items-center justify-between pt-4 border-t border-gray-100">
-        {/* Price display */}
+      <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-border mt-4">
         <div>
-          <span className="text-xs text-gray-400 block">Price</span>
-          <span className="text-xl font-extrabold text-blue-600">
+          <span className="text-xs text-muted-foreground block">Price</span>
+          <span className="text-lg font-bold text-primary">
             ${product.price.toFixed(2)}
           </span>
         </div>
 
-        {/* Add to Cart Button */}
-        <button
-          onClick={() => addToCart(product)}
-          className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-medium px-4 py-2 rounded-lg transition-all text-sm shadow-sm">
+        <Button onClick={() => addToCart(product)} size="sm">
           Add to Cart
-        </button>
-      </div>
-    </div>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

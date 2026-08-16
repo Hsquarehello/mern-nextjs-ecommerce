@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "MERN Next.js E-Commerce",
@@ -14,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className="antialiased bg-gray-50 text-gray-900">
         <CartProvider>
           <Navbar />
