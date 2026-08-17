@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types";
+import { getProductImageUrl } from "@/lib/utils";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -54,7 +55,7 @@ export default function ProductsPage() {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   // Products တောင်းယူသည့် Function
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`http://localhost:5000/api/products`, {
@@ -76,7 +77,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm]);
 
   // Page သို့မဟုတ် Search ရိုက်လိုက်တိုင်း Data ပြန်ဆွဲခြင်း
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function ProductsPage() {
     }, 400); // Search debounce 400ms
 
     return () => clearTimeout(delayDebounceFn);
-  }, [page, searchTerm]);
+  }, [fetchProducts]);
 
   // Product ဖျက်သည့် Function
   const handleDelete = async () => {
@@ -100,7 +101,11 @@ export default function ProductsPage() {
       // ဖျက်ပြီးပါက List ကို Update ပြန်လုပ်ခြင်း
       setProducts((prev) => prev.filter((p) => p._id !== deleteId));
       setDeleteId(null);
-      fetchProducts(); // Total Count ပြန်မှန်အောင် Data ပြန်ဆွဲခြင်း
+      if (products.length === 1 && page > 1) {
+        setPage((prev) => prev - 1);
+      } else {
+        fetchProducts();
+      }
     } catch (error) {
       console.error("Failed to delete product:", error);
     } finally {
@@ -176,24 +181,7 @@ export default function ProductsPage() {
             ) : (
               products.map((product) => {
                 // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
-                let imageUrl = "/placeholder.png";
-
-                if (
-                  Array.isArray(product.images) &&
-                  product.images.length > 0
-                ) {
-                  if (
-                    typeof product.images[0] === "string" &&
-                    product.images[0].trim() !== ""
-                  ) {
-                    imageUrl = product.images[0];
-                  }
-                } else if (
-                  typeof product.images === "string" &&
-                  (product.images as string).trim() !== ""
-                ) {
-                  imageUrl = product.images;
-                }
+                let imageUrl = getProductImageUrl(product.images);
 
                 return (
                   <TableRow key={product._id}>
@@ -204,6 +192,7 @@ export default function ProductsPage() {
                           src={imageUrl}
                           alt={product.name}
                           fill
+                          sizes="48px"
                           className="object-cover"
                         />
                       </div>

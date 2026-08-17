@@ -1,12 +1,28 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
+
+// Shadcn UI Base Components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -40,7 +56,6 @@ export default function LoginPage() {
       );
 
       if (response.data.success) {
-        // Redirect to home page on successful login
         await checkAuth();
         router.push("/");
         router.refresh();
@@ -54,47 +69,79 @@ export default function LoginPage() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 max-w-md mx-auto p-4">
-      {serverError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm">
-          {serverError}
-        </div>
-      )}
+    <div className="flex min-h-screen items-center justify-center bg-gray-50/50 p-4">
+      <Card className="w-full max-w-md shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
 
-      <div>
-        <label className="block text-sm font-medium">Email</label>
-        <input
-          type="email"
-          {...register("email")}
-          className="w-full border p-2 rounded"
-          placeholder="user@example.com"
-        />
-        {errors.email && (
-          <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-        )}
-      </div>
+        <CardContent>
+          {serverError && (
+            <div className="mb-6 p-3 bg-destructive/15 border border-destructive/30 text-destructive text-sm rounded-md">
+              {serverError}
+            </div>
+          )}
 
-      <div>
-        <label className="block text-sm font-medium">Password</label>
-        <input
-          type="password"
-          {...register("password")}
-          className="w-full border p-2 rounded"
-          placeholder="••••••••"
-        />
-        {errors.password && (
-          <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-        )}
-      </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="user@example.com"
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="bg-black text-white px-4 py-2 rounded w-full disabled:opacity-50">
-        {isSubmitting ? "Logging in..." : "Login"}
-      </button>
-    </form>
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full mt-2">
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {isSubmitting ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className="justify-center border-t pt-4">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link
+              href="/register"
+              className="font-semibold text-primary hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

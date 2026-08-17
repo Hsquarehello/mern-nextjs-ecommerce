@@ -25,6 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Image from "next/image";
+import { getProductImageUrl } from "@/lib/utils";
 
 // Stripe Publishable Key ကို Load လုပ်ပါ
 const stripePromise = loadStripe(
@@ -117,31 +119,19 @@ export default function CheckoutPage() {
                 <TableBody>
                   {cart.map((item) => {
                     // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
-                    let imageUrl = "/placeholder.png";
-
-                    if (Array.isArray(item.images) && item.images.length > 0) {
-                      if (
-                        typeof item.images[0] === "string" &&
-                        item.images[0].trim() !== ""
-                      ) {
-                        imageUrl = item.images[0];
-                      }
-                    } else if (
-                      typeof item.images === "string" &&
-                      (item.images as string).trim() !== ""
-                    ) {
-                      imageUrl = item.images;
-                    }
+                    let imageUrl = getProductImageUrl(item.images);
 
                     return (
                       <TableRow key={item._id}>
                         {/* Product Info */}
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-3">
-                            <img
+                            <Image
                               src={imageUrl}
                               alt={item.name}
-                              className="w-12 h-12 object-cover rounded-md bg-muted"
+                              width={48}
+                              height={48}
+                              className="object-cover rounded-md bg-muted"
                             />
                             <div>
                               <span className="font-bold text-sm block line-clamp-1">

@@ -10,6 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { getProductImageUrl } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -19,22 +21,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
 
   // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
-  let imageUrl = "/placeholder.png";
-
-  if (Array.isArray(product.images) && product.images.length > 0) {
-    if (
-      typeof product.images[0] === "string" &&
-      product.images[0].trim() !== ""
-    ) {
-      imageUrl = product.images[0];
-    }
-  } else if (
-    typeof product.images === "string" &&
-    (product.images as string).trim() !== ""
-  ) {
-    imageUrl = product.images;
-  }
-
+  let imageUrl = getProductImageUrl(product.images);
   return (
     <Card className="flex flex-col justify-between overflow-hidden hover:shadow-lg transition-shadow">
       <div>

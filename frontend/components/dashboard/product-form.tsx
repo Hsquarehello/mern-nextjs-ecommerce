@@ -6,11 +6,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 
+import { productFormSchema } from "@/lib/validations/product";
+
+// Shadcn UI Base Components (Update သစ်တွင် Form မလိုတော့ပါ)
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
-  productFormSchema,
-  ProductFormValues,
-} from "@/lib/validations/product";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface ProductFormProps {
   initialData?: {
@@ -25,6 +37,9 @@ interface ProductFormProps {
   } | null;
 }
 
+type ProductFormInput = z.input<typeof productFormSchema>;
+type ProductFormOutput = z.output<typeof productFormSchema>;
+
 export function ProductForm({ initialData }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -32,13 +47,11 @@ export function ProductForm({ initialData }: ProductFormProps) {
 
   const isEditMode = Boolean(initialData);
 
-  // Input type နဲ့ Output type ကို Zod မှ ခွဲထုတ်ယူခြင်း
-  type ProductFormInput = z.input<typeof productFormSchema>;
-  type ProductFormOutput = z.output<typeof productFormSchema>;
-
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ProductFormInput, any, ProductFormOutput>({
     resolver: zodResolver(productFormSchema),
@@ -63,15 +76,19 @@ export function ProductForm({ initialData }: ProductFormProps) {
         },
   });
 
-  const onSubmit = async (data: ProductFormValues) => {
+  const isFeaturedValue = watch("isFeatured");
+
+  const onSubmit = async (data: ProductFormOutput) => {
     try {
       setLoading(true);
       setErrorMessage("");
 
-      // Convert comma-separated images string back into an array
       const payload = {
         ...data,
-        images: data.images.split(",").map((url) => url.trim()),
+        images:
+          typeof data.images === "string"
+            ? data.images.split(",").map((url) => url.trim())
+            : data.images,
       };
 
       if (isEditMode && initialData) {
@@ -100,158 +117,150 @@ export function ProductForm({ initialData }: ProductFormProps) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md border">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold tracking-tight">
+    <Card className="max-w-2xl mx-auto shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold">
           {isEditMode ? "Edit Product" : "Create Product"}
-        </h2>
-        <p className="text-sm text-gray-500">
+        </CardTitle>
+        <CardDescription>
           {isEditMode
             ? "Update existing product details"
             : "Add a new product to your inventory"}
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      {errorMessage && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded">
-          {errorMessage}
-        </div>
-      )}
+      <CardContent>
+        {errorMessage && (
+          <div className="mb-6 p-3 bg-destructive/15 border border-destructive/30 text-destructive text-sm rounded-md">
+            {errorMessage}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Product Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Product Name
-          </label>
-          <input
-            {...register("name")}
-            type="text"
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-black focus:outline-none"
-            placeholder="e.g. Wireless Headphones"
-          />
-          {errors.name && (
-            <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
-          )}
-        </div>
-
-        {/* Category & Price Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Category
-            </label>
-            <input
-              {...register("category")}
-              type="text"
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-black focus:outline-none"
-              placeholder="e.g. Electronics"
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Product Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Product Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g. Wireless Headphones"
+              {...register("name")}
             />
-            {errors.category && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.category.message}
-              </p>
+            {errors.name && (
+              <p className="text-xs text-destructive">{errors.name.message}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Price ($)
-            </label>
-            <input
-              {...register("price")}
+          {/* Category & Price Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                placeholder="e.g. Electronics"
+                {...register("category")}
+              />
+              {errors.category && (
+                <p className="text-xs text-destructive">
+                  {errors.category.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price">Price ($)</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                placeholder="99.99"
+                {...register("price")}
+              />
+              {errors.price && (
+                <p className="text-xs text-destructive">
+                  {errors.price.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Stock Quantity */}
+          <div className="space-y-2">
+            <Label htmlFor="stock">Stock Quantity</Label>
+            <Input
+              id="stock"
               type="number"
-              step="0.01"
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-black focus:outline-none"
-              placeholder="99.99"
+              placeholder="100"
+              {...register("stock")}
             />
-            {errors.price && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.price.message}
+            {errors.stock && (
+              <p className="text-xs text-destructive">{errors.stock.message}</p>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              rows={4}
+              placeholder="Detailed description of the product..."
+              {...register("description")}
+            />
+            {errors.description && (
+              <p className="text-xs text-destructive">
+                {errors.description.message}
               </p>
             )}
           </div>
-        </div>
 
-        {/* Stock */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Stock Quantity
-          </label>
-          <input
-            {...register("stock")}
-            type="number"
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-black focus:outline-none"
-            placeholder="100"
-          />
-          {errors.stock && (
-            <p className="text-xs text-red-500 mt-1">{errors.stock.message}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            {...register("description")}
-            rows={4}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-black focus:outline-none"
-            placeholder="Detailed description of the product..."
-          />
-          {errors.description && (
-            <p className="text-xs text-red-500 mt-1">
-              {errors.description.message}
+          {/* Image URLs */}
+          <div className="space-y-2">
+            <Label htmlFor="images">Image URLs</Label>
+            <Input
+              id="images"
+              placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
+              {...register("images")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Separate multiple image URLs with commas.
             </p>
-          )}
-        </div>
+            {errors.images && (
+              <p className="text-xs text-destructive">
+                {errors.images.message}
+              </p>
+            )}
+          </div>
 
-        {/* Images (Comma Separated URLs) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Image URLs (Comma separated)
-          </label>
-          <input
-            {...register("images")}
-            type="text"
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-black focus:outline-none"
-            placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-          />
-          {errors.images && (
-            <p className="text-xs text-red-500 mt-1">{errors.images.message}</p>
-          )}
-        </div>
+          {/* Is Featured Checkbox */}
+          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+            <Checkbox
+              id="isFeatured"
+              checked={isFeaturedValue}
+              onCheckedChange={(checked) =>
+                setValue("isFeatured", checked as boolean)
+              }
+            />
+            <div className="space-y-1 leading-none">
+              <Label htmlFor="isFeatured" className="cursor-pointer">
+                Featured Product
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                This product will appear on the home page showcase.
+              </p>
+            </div>
+          </div>
 
-        {/* Is Featured Checkbox */}
-        <div className="flex items-center space-x-2 pt-2">
-          <input
-            {...register("isFeatured")}
-            type="checkbox"
-            id="isFeatured"
-            className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-          />
-          <label
-            htmlFor="isFeatured"
-            className="text-sm font-medium text-gray-700">
-            Featured Product (Displays on Homepage)
-          </label>
-        </div>
-
-        {/* Submit Button */}
-        <div className="pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50">
+          {/* Submit Button */}
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading
               ? "Saving..."
               : isEditMode
                 ? "Update Product"
                 : "Create Product"}
-          </button>
-        </div>
-      </form>
-    </div>
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
