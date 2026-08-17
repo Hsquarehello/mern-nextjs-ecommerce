@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { Product } from "@/types";
+import axios, { AxiosResponse } from "axios";
+import { ApiResponse, Product } from "@/types";
 import ProductCard from "@/components/ProductCard";
 
 // Shadcn UI & Base UI Components
@@ -21,16 +21,16 @@ export default function HomePage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get<Product[]>(
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/products"
+      const response = await axios.get<ApiResponse<Product[]>>(
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/products",
       );
-      setProducts(response.data);
+      setProducts(response.data.data || []);
     } catch (err: any) {
       console.error("Fetch error:", err);
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to fetch products"
+          "Failed to fetch products",
       );
     } finally {
       setLoading(false);
@@ -44,7 +44,6 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background py-10 px-4 sm:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        
         {/* Page Header / Hero Section */}
         <div className="flex flex-col items-center sm:items-start space-y-3 border-b pb-6">
           <Badge variant="outline" className="gap-1 px-3 py-1 text-xs">
@@ -57,7 +56,8 @@ export default function HomePage() {
           </h1>
 
           <p className="text-muted-foreground text-sm sm:text-base max-w-2xl">
-            Discover real-time items fetched directly from our API. High quality products curated just for you.
+            Discover real-time items fetched directly from our API. High quality
+            products curated just for you.
           </p>
         </div>
 
@@ -83,7 +83,11 @@ export default function HomePage() {
                 <p className="font-semibold">Error Loading Products</p>
                 <p className="text-xs opacity-90">{error}</p>
               </div>
-              <Button size="sm" variant="outline" onClick={fetchProducts} className="gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={fetchProducts}
+                className="gap-1">
                 <RefreshCw className="h-3.5 w-3.5" />
                 <span>Retry</span>
               </Button>
@@ -103,10 +107,17 @@ export default function HomePage() {
                   <div>
                     <h3 className="text-lg font-bold">No Products Found</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      There are no items currently in the database. Please run <code className="bg-muted px-1.5 py-0.5 rounded text-foreground font-mono">npm run seed</code> in your backend repository.
+                      There are no items currently in the database. Please run{" "}
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-foreground font-mono">
+                        npm run seed
+                      </code>{" "}
+                      in your backend repository.
                     </p>
                   </div>
-                  <Button variant="outline" onClick={fetchProducts} className="gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={fetchProducts}
+                    className="gap-2">
                     <RefreshCw className="h-4 w-4" />
                     <span>Refresh Data</span>
                   </Button>
@@ -121,7 +132,6 @@ export default function HomePage() {
             )}
           </>
         )}
-
       </div>
     </main>
   );

@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Product } from '@/types';
-import { useCart } from '@/context/CartContext';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Product } from "@/types";
+import { useCart } from "@/context/CartContext";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface ProductCardProps {
   product: Product;
@@ -13,13 +18,30 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
 
+  // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
+  let imageUrl = "/placeholder.png";
+
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    if (
+      typeof product.images[0] === "string" &&
+      product.images[0].trim() !== ""
+    ) {
+      imageUrl = product.images[0];
+    }
+  } else if (
+    typeof product.images === "string" &&
+    (product.images as string).trim() !== ""
+  ) {
+    imageUrl = product.images;
+  }
+
   return (
     <Card className="flex flex-col justify-between overflow-hidden hover:shadow-lg transition-shadow">
       <div>
         {/* Product Image */}
         <div className="w-full h-48 overflow-hidden bg-muted">
           <img
-            src={product.imageUrl}
+            src={imageUrl}
             alt={product.name}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />

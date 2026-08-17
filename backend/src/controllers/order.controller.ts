@@ -1,13 +1,14 @@
-import type { Request, Response } from 'express';
-import Order from '../models/Order.js';
+import type { Request, Response } from "express";
+import Order from "../models/Order.js";
+import { AppError } from "../utils/appError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const createOrder = async (req: Request, res: Response): Promise<void> => {
-  try {
+export const createOrder = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
     const { orderItems, totalAmount, paymentIntentId } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
-      res.status(400).json({ message: 'No items in order' });
-      return;
+      throw new AppError("No items in order", 400);
     }
 
     const order = new Order({
@@ -20,7 +21,5 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
     const savedOrder = await order.save();
     res.status(201).json(savedOrder);
-  } catch (error: any) {
-    res.status(500).json({ message: 'Order Saving Failed', error: error.message });
-  }
-};
+  },
+);
