@@ -31,7 +31,7 @@ export const createProduct = asyncHandler(
 // @access  Public
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 10;
+  const limit = parseInt(req.query.limit as string) || 8;
   const skip = (page - 1) * limit;
 
   const category = req.query.category as string;
@@ -58,12 +58,10 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     success: true,
     message: "Products retrieved successfully",
     data: products,
-    pagination: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
   });
 });
 

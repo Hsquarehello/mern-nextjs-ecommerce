@@ -99,7 +99,6 @@ export default function ProductsPage() {
       });
 
       // ဖျက်ပြီးပါက List ကို Update ပြန်လုပ်ခြင်း
-      setProducts((prev) => prev.filter((p) => p._id !== deleteId));
       setDeleteId(null);
       if (products.length === 1 && page > 1) {
         setPage((prev) => prev - 1);
