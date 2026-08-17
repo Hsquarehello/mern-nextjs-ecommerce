@@ -17,8 +17,34 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
+  images: string[];
+  category: string;
   stock: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+// 1. Base API Response Interface
+export interface ApiResponse<T = null> {
+  success: boolean;
+  message: string;
+  data?: T;
+  errors?: Record<string, string[]> | string[];
+  stack?: string;
+}
+
+// 2. Pagination Metadata Interface
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// 3. Paginated API Response Interface
+export interface PaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  pagination: PaginationMeta;
 }

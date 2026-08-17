@@ -115,71 +115,90 @@ export default function CheckoutPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cart.map((item) => (
-                    <TableRow key={item._id}>
-                      {/* Product Info */}
-                      <TableCell className="font-medium">
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="w-12 h-12 object-cover rounded-md bg-muted"
-                          />
-                          <div>
-                            <span className="font-bold text-sm block line-clamp-1">
-                              {item.name}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              ${item.price.toFixed(2)} each
-                            </span>
+                  {cart.map((item) => {
+                    // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
+                    let imageUrl = "/placeholder.png";
+
+                    if (Array.isArray(item.images) && item.images.length > 0) {
+                      if (
+                        typeof item.images[0] === "string" &&
+                        item.images[0].trim() !== ""
+                      ) {
+                        imageUrl = item.images[0];
+                      }
+                    } else if (
+                      typeof item.images === "string" &&
+                      (item.images as string).trim() !== ""
+                    ) {
+                      imageUrl = item.images;
+                    }
+
+                    return (
+                      <TableRow key={item._id}>
+                        {/* Product Info */}
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={imageUrl}
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded-md bg-muted"
+                            />
+                            <div>
+                              <span className="font-bold text-sm block line-clamp-1">
+                                {item.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                ${item.price.toFixed(2)} each
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
+                        </TableCell>
 
-                      {/* Quantity Controls */}
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center space-x-1">
+                        {/* Quantity Controls */}
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center space-x-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() =>
+                                updateQuantity(item._id, item.quantity - 1)
+                              }>
+                              -
+                            </Button>
+                            <span className="w-8 text-center text-sm font-semibold">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() =>
+                                updateQuantity(item._id, item.quantity + 1)
+                              }>
+                              +
+                            </Button>
+                          </div>
+                        </TableCell>
+
+                        {/* Subtotal Price */}
+                        <TableCell className="text-right font-bold text-primary">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </TableCell>
+
+                        {/* Remove Button */}
+                        <TableCell className="text-right">
                           <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() =>
-                              updateQuantity(item._id, item.quantity - 1)
-                            }>
-                            -
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => removeFromCart(item._id)}>
+                            Remove
                           </Button>
-                          <span className="w-8 text-center text-sm font-semibold">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() =>
-                              updateQuantity(item._id, item.quantity + 1)
-                            }>
-                            +
-                          </Button>
-                        </div>
-                      </TableCell>
-
-                      {/* Subtotal Price */}
-                      <TableCell className="text-right font-bold text-primary">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </TableCell>
-
-                      {/* Remove Button */}
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => removeFromCart(item._id)}>
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
 

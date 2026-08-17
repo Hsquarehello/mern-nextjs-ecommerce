@@ -4,8 +4,9 @@ import { CartProvider } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/context/AuthContext";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "MERN Next.js E-Commerce",
@@ -20,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className="antialiased bg-gray-50 text-gray-900">
-        <CartProvider>
-          <Navbar />
-          <main>{children}</main>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Navbar />
+            <main>{children}</main>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );
