@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { getProductImageUrl } from "@/lib/utils";
+import Link from "next/link";
 
 interface ProductCardProps {
   product: Product;
@@ -47,17 +48,34 @@ export default function ProductCard({ product }: ProductCardProps) {
         </CardContent>
       </div>
 
-      <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-border mt-4">
-        <div>
-          <span className="text-xs text-muted-foreground block">Price</span>
-          <span className="text-lg font-bold text-primary">
-            ${product.price.toFixed(2)}
-          </span>
-        </div>
+      <CardFooter className="mt-4 border-t border-border p-4">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Price
+            </span>
+            <span className="text-2xl font-bold tracking-tight text-foreground">
+              ${product.price.toFixed(2)}
+            </span>
+          </div>
 
-        <Button onClick={() => addToCart(product)} size="sm">
-          Add to Cart
-        </Button>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Button
+              render={<Link href={`/products/${product._id}`} />}
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-none">
+              View Details
+            </Button>
+
+            <Button
+              onClick={() => addToCart(product)}
+              size="sm"
+              className="flex-1 bg-slate-900 text-white hover:bg-slate-800 sm:flex-none">
+              Add to Cart
+            </Button>
+          </div>
+        </div>
       </CardFooter>
     </Card>
   );
