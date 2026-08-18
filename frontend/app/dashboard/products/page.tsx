@@ -180,7 +180,7 @@ export default function ProductsPage() {
             ) : (
               products.map((product) => {
                 // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
-                let imageUrl = getProductImageUrl(product.images);
+                let imageUrl = getProductImageUrl(product.imageUrl);
 
                 return (
                   <TableRow key={product._id}>

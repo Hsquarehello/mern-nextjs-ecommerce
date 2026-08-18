@@ -11,7 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 
-export default function CheckoutForm() {
+interface CheckoutFormProps {
+  amount?: number; // Total Amount (Optional)
+}
+
+export default function CheckoutForm({ amount }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -21,12 +25,22 @@ export default function CheckoutForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!stripe || !elements) {
+    if (!stripe || !elements || isProcessing) {
       return;
     }
 
     setIsProcessing(true);
     setErrorMessage(null);
+
+    // 1. Stripe Elements Form Validation စစ်ဆေးခြင်း
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setErrorMessage(
+        submitError.message || "Please fill in all required payment details.",
+      );
+      setIsProcessing(false);
+      return;
+    }
 
     // Dynamic Origin URL ကို ရယူခြင်း (Localhost သို့မဟုတ် Production Domain)
     const redirectUrl = `${window.location.origin}/success`;
@@ -80,7 +94,7 @@ export default function CheckoutForm() {
         ) : (
           <>
             <ShieldCheck className="h-5 w-5" />
-            <span>Pay Now</span>
+            <span>{amount ? `Pay $${amount.toFixed(2)}` : "Pay Now"}</span>
           </>
         )}
       </Button>

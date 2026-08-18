@@ -10,11 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function getProductEndpoint(productId: string) {
-  const base =
-    (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(
-      /\/+$/,
-      "",
-    );
+  const base = (
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  ).replace(/\/+$/, "");
 
   if (base.endsWith("/products")) {
     return `${base}/${productId}`;
@@ -78,8 +76,12 @@ export default function ProductDetailClient({
     return (
       <main className="mx-auto max-w-4xl px-4 py-16">
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-center">
-          <h1 className="text-2xl font-bold text-destructive">Product not found</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{error || "This item is unavailable."}</p>
+          <h1 className="text-2xl font-bold text-destructive">
+            Product not found
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error || "This item is unavailable."}
+          </p>
           <div className="mt-6 flex justify-center gap-3">
             <Button render={<Link href="/" />} variant="outline">
               Back to Home
@@ -92,8 +94,7 @@ export default function ProductDetailClient({
   }
 
   const imageUrl =
-    product.images?.[0] ||
-    "https://placehold.co/1200x900?text=Product+Image";
+    product.imageUrl || "https://placehold.co/1200x900?text=Product+Image";
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -114,7 +115,9 @@ export default function ProductDetailClient({
 
         <div className="space-y-6">
           <div className="space-y-3">
-            <Badge variant="outline" className="text-xs uppercase tracking-wide">
+            <Badge
+              variant="outline"
+              className="text-xs uppercase tracking-wide">
               {product.category || "General"}
             </Badge>
 
@@ -132,7 +135,10 @@ export default function ProductDetailClient({
               Add to Cart
             </Button>
 
-            <Button render={<Link href="/checkout" />} variant="outline" size="lg">
+            <Button
+              render={<Link href="/checkout" />}
+              variant="outline"
+              size="lg">
               Go to Checkout
             </Button>
           </div>
@@ -141,7 +147,9 @@ export default function ProductDetailClient({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Availability</span>
               <span className="font-medium">
-                {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+                {product.stock > 0
+                  ? `${product.stock} in stock`
+                  : "Out of stock"}
               </span>
             </div>
           </div>
@@ -149,7 +157,8 @@ export default function ProductDetailClient({
           <div className="space-y-2">
             <h2 className="text-lg font-semibold">Description</h2>
             <p className="leading-7 text-muted-foreground">
-              {product.description || "No description available for this product."}
+              {product.description ||
+                "No description available for this product."}
             </p>
           </div>
         </div>

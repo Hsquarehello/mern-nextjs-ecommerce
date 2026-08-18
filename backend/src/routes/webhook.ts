@@ -6,7 +6,7 @@ import Order from "../models/Order.js";
 const router = express.Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2023-10-16" as any,
+  apiVersion: "2026-07-29.dahlia" as any,
 });
 
 // Stripe Webhook Endpoint (Must use express.raw for signature verification)
@@ -45,22 +45,52 @@ router.post(
       );
 
       try {
+        // 1. Duplicate Order ဖြစ်မသွားအောင် စစ်ဆေးခြင်း (Idempotency Guard)
+        const existingOrder = await Order.findOne({
+          paymentIntentId: paymentIntent.id,
+        });
+
+        if (existingOrder) {
+          console.log(
+            `⚠️ Order already exists for PaymentIntent: ${paymentIntent.id}`,
+          );
+          res
+            .status(200)
+            .json({ received: true, message: "Order already processed" });
+          return;
+        }
+
         // PaymentIntent တွင် ပါရှိသော Metadata မှ Items များကို ဖြန့်ယူခြင်း
-        const cartItems = paymentIntent.metadata?.items
-          ? JSON.parse(paymentIntent.metadata.items)
-          : [];
+        const metadata = paymentIntent.metadata || {};
+        const cartItems = metadata.items ? JSON.parse(metadata.items) : [];
+        const shippingAddress = metadata.shippingAddress
+          ? JSON.parse(metadata.shippingAddress)
+          : undefined;
+        const userId = metadata.userId || undefined;
+
+        // ✅ အတိုချုံ့ထားသော metadata (id, p, q, img) မှ Schema ပုံစံအတိုင်း ပြန် mapping လုပ်ခြင်း
+        const formattedItems = cartItems.map((item: any) => ({
+          product: item.id || item._id,
+          name: item.name,
+          price: Number(item.p ?? item.price),
+          quantity: Number(item.qty ?? item.quantity ?? 1),
+          imageUrl: item.img || "",
+        }));
 
         // Order သစ်ကို MongoDB ထဲသို့ သိမ်းဆည်းခြင်း
         const newOrder = new Order({
+          user: userId,
           paymentIntentId: paymentIntent.id,
           amount: paymentIntent.amount / 100, // Cents ကို Dollars သို့ ပြန်ပြောင်းခြင်း
           currency: paymentIntent.currency,
-          status: paymentIntent.status,
+          paymentStatus: "paid",
+          orderStatus: "Processing",
           customerEmail:
             paymentIntent.receipt_email ||
             paymentIntent.metadata?.customerEmail ||
             "N/A",
-          items: cartItems,
+          items: formattedItems,
+          shippingAddress: shippingAddress,
         });
 
         await newOrder.save();

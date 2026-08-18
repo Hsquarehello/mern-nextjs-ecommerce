@@ -22,7 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
 
   // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
-  let imageUrl = getProductImageUrl(product.images);
+  let imageUrl = getProductImageUrl(product.imageUrl);
   return (
     <Card className="flex flex-col justify-between overflow-hidden hover:shadow-lg transition-shadow">
       <div>
@@ -48,10 +48,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         </CardContent>
       </div>
 
-      <CardFooter className="mt-4 border-t border-border p-4">
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+      <CardFooter className="mt-auto border-t border-border bg-muted/30 p-4">
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Price
             </span>
             <span className="text-2xl font-bold tracking-tight text-foreground">
@@ -59,19 +59,19 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          <div className="flex w-full gap-2 sm:w-auto">
+          <div className="grid w-full grid-cols-2 gap-2">
             <Button
               render={<Link href={`/products/${product._id}`} />}
               variant="outline"
               size="sm"
-              className="flex-1 sm:flex-none">
+              className="w-full justify-center">
               View Details
             </Button>
 
             <Button
               onClick={() => addToCart(product)}
               size="sm"
-              className="flex-1 bg-slate-900 text-white hover:bg-slate-800 sm:flex-none">
+              className="w-full justify-center bg-slate-900 text-white hover:bg-slate-800 cursor-pointer">
               Add to Cart
             </Button>
           </div>

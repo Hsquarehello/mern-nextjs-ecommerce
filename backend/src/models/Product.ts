@@ -6,7 +6,7 @@ export interface IProduct extends Document {
   price: number;
   category: string;
   stock: number;
-  images: string[];
+  imageUrl: string;
   isFeatured: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -39,9 +39,10 @@ const productSchema = new Schema<IProduct>(
       default: 0,
       min: [0, "Stock cannot be negative"],
     },
-    images: {
-      type: [String],
-      required: [true, "At least one product image is required"],
+    imageUrl: {
+      type: String,
+      required: [true, "Product image URL is required"], // ✨ Single string image URL
+      trim: true,
     },
     isFeatured: {
       type: Boolean,

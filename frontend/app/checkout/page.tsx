@@ -41,33 +41,37 @@ export default function CheckoutPage() {
 
   // Cart ထဲတွင် စုစုပေါင်း ဈေးနှုန်း ရှိပါက Backend ထံမှ Payment Intent Client Secret တောင်းယူမည်
   useEffect(() => {
-    if (totalPrice > 0) {
-      setLoadingSecret(true);
-      setFetchError(null);
+    const handler = setTimeout(() => {
+      if (totalPrice > 0) {
+        setLoadingSecret(true);
+        setFetchError(null);
 
-      axios
-        .post("http://localhost:5000/api/payment/create-payment-intent", {
-          amount: Math.round(totalPrice * 100), // Stripe တွင် Cents အနေဖြင့် တွက်သဖြင့် * 100 မြှောက်ပေးရပါမည်
-          items: cart.map((item) => ({
-            _id: item._id,
-            price: item.price,
-            quantity: item.quantity,
-          })),
-        })
-        .then((res) => {
-          setClientSecret(res.data.clientSecret);
-        })
-        .catch((err) => {
-          console.error("PaymentIntent Error:", err);
-          setFetchError(
-            "Failed to initialize payment form. Please check backend connection.",
-          );
-        })
-        .finally(() => {
-          setLoadingSecret(false);
-        });
-    }
-  }, [totalPrice]);
+        axios
+          .post("http://localhost:5000/api/payment/create-payment-intent", {
+            amount: Math.round(totalPrice * 100), // Stripe တွင် Cents အနေဖြင့် တွက်သဖြင့် * 100 မြှောက်ပေးရပါမည်
+            items: cart.map((item) => ({
+              _id: item._id,
+              price: item.price,
+              quantity: item.quantity,
+              imageUrl: item.imageUrl,
+            })),
+          })
+          .then((res) => {
+            setClientSecret(res.data.clientSecret);
+          })
+          .catch((err) => {
+            console.error("PaymentIntent Error:", err);
+            setFetchError(
+              "Failed to initialize payment form. Please check backend connection.",
+            );
+          })
+          .finally(() => {
+            setLoadingSecret(false);
+          });
+      }
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [totalPrice, cart]);
 
   // Cart ကွန်တိန်နာ ထဲတွင် ပစ္စည်းမရှိသေးပါက ပြသမည့် UI
   if (cart.length === 0) {
@@ -119,7 +123,7 @@ export default function CheckoutPage() {
                 <TableBody>
                   {cart.map((item) => {
                     // Image URL ရယူခြင်း (Type Guard သေချာ ထည့်ထားပါသည်)
-                    let imageUrl = getProductImageUrl(item.images);
+                    let imageUrl = getProductImageUrl(item.imageUrl);
 
                     return (
                       <TableRow key={item._id}>
@@ -236,7 +240,7 @@ export default function CheckoutPage() {
                 <Elements
                   stripe={stripePromise}
                   options={{ clientSecret, appearance: { theme: "stripe" } }}>
-                  <CheckoutForm />
+                  <CheckoutForm amount={totalPrice} />
                 </Elements>
               )}
             </CardContent>
