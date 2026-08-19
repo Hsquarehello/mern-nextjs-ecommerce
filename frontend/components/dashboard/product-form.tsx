@@ -32,7 +32,7 @@ interface ProductFormProps {
     price: number;
     category: string;
     stock: number;
-    images: string[];
+    imageUrl: string;
     isFeatured: boolean;
   } | null;
 }
@@ -62,7 +62,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
           price: initialData.price,
           category: initialData.category,
           stock: initialData.stock,
-          images: initialData.images.join(", "),
+          imageUrl: initialData.imageUrl,
           isFeatured: initialData.isFeatured,
         }
       : {
@@ -71,7 +71,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
           price: 0,
           category: "",
           stock: 0,
-          images: "",
+          imageUrl: "",
           isFeatured: false,
         },
   });
@@ -83,22 +83,14 @@ export function ProductForm({ initialData }: ProductFormProps) {
       setLoading(true);
       setErrorMessage("");
 
-      const payload = {
-        ...data,
-        images:
-          typeof data.images === "string"
-            ? data.images.split(",").map((url) => url.trim())
-            : data.images,
-      };
-
       if (isEditMode && initialData) {
         await axios.put(
           `http://localhost:5000/api/products/${initialData._id}`,
-          payload,
+          data,
           { withCredentials: true },
         );
       } else {
-        await axios.post("http://localhost:5000/api/products", payload, {
+        await axios.post("http://localhost:5000/api/products", data, {
           withCredentials: true,
         });
       }
@@ -217,16 +209,16 @@ export function ProductForm({ initialData }: ProductFormProps) {
           <div className="space-y-2">
             <Label htmlFor="images">Image URLs</Label>
             <Input
-              id="images"
+              id="imageUrl"
               placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-              {...register("images")}
+              {...register("imageUrl")}
             />
             <p className="text-xs text-muted-foreground">
               Separate multiple image URLs with commas.
             </p>
-            {errors.images && (
+            {errors.imageUrl && (
               <p className="text-xs text-destructive">
-                {errors.images.message}
+                {errors.imageUrl.message}
               </p>
             )}
           </div>

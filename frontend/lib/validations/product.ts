@@ -8,7 +8,7 @@ export const productFormSchema = z.object({
   price: z.coerce.number().positive("Price must be a positive number"),
   category: z.string().min(1, "Category is required"),
   stock: z.coerce.number().int().nonnegative("Stock cannot be negative"),
-  images: z.string().min(1, "At least one image URL is required"), // Comma-separated strings
+  imageUrl: z.string().url("Please enter a valid Image URL"),
   isFeatured: z.boolean().default(false),
 });
 
