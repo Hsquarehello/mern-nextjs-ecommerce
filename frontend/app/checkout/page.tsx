@@ -47,15 +47,21 @@ export default function CheckoutPage() {
         setFetchError(null);
 
         axios
-          .post("http://localhost:5000/api/payment/create-payment-intent", {
-            amount: Math.round(totalPrice * 100), // Stripe တွင် Cents အနေဖြင့် တွက်သဖြင့် * 100 မြှောက်ပေးရပါမည်
-            items: cart.map((item) => ({
-              _id: item._id,
-              price: item.price,
-              quantity: item.quantity,
-              imageUrl: item.imageUrl,
-            })),
-          })
+          .post(
+            "http://localhost:5000/api/payment/create-payment-intent",
+            {
+              amount: Math.round(totalPrice * 100), // Stripe တွင် Cents အနေဖြင့် တွက်သဖြင့် * 100 မြှောက်ပေးရပါမည်
+              items: cart.map((item) => ({
+                _id: item._id,
+                price: item.price,
+                quantity: item.quantity,
+                imageUrl: item.imageUrl,
+              })),
+            },
+            {
+              withCredentials: true,
+            },
+          )
           .then((res) => {
             setClientSecret(res.data.clientSecret);
           })

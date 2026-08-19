@@ -23,6 +23,43 @@ export interface AuthRequest extends Request {
   };
 }
 
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  let token: string | undefined;
+
+  // 1. Cookie ထဲမှ token ကို အရင် စစ်ယူမည်
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+  // 2. Cookie မရှိပါက Authorization Header (Bearer token) ကို စစ်မည်
+  else if (req.headers.authorization?.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  // Token နှစ်ခုလုံး မရှိပါက Guest အနေဖြင့် ရှေ့ဆက်မည်
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      id: string;
+    };
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (user) {
+      (req as any).user = user;
+    }
+  } catch (error) {
+    console.error("Optional auth token invalid:", error);
+  }
+
+  next();
+};
+
 export const authenticate = (
   req: AuthRequest,
   _res: Response,

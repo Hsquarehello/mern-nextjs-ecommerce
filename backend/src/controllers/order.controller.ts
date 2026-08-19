@@ -8,6 +8,7 @@ export const createOrder = asyncHandler(
     const { items, amount, paymentIntentId, customerEmail, shippingAddress } =
       req.body;
 
+    console.log(req.user);
     if (!items || items.length === 0) {
       throw new AppError("No items in order", 400);
     }

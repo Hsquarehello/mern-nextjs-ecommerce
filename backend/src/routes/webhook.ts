@@ -68,6 +68,32 @@ router.post(
           : undefined;
         const userId = metadata.userId || undefined;
 
+        const stripeShipping = paymentIntent.shipping;
+        const formattedShippingAddress = stripeShipping
+          ? {
+              name: stripeShipping.name,
+              line1: stripeShipping.address?.line1 || "",
+              line2: stripeShipping.address?.line2 || "",
+              city: stripeShipping.address?.city || "",
+              state: stripeShipping.address?.state || "",
+              postal_code: stripeShipping.address?.postal_code || "",
+              country: stripeShipping.address?.country || "",
+            }
+          : undefined;
+
+        // 4. LinkAuthenticationElement မှ ပို့ပေးလိုက်သော Email ကို ရယူခြင်း
+        // Note: receipt_email မပါလာပါက latest_charge ထဲမှ email ကို ယူပါမည်
+        let customerEmail =
+          paymentIntent.receipt_email || metadata.customerEmail;
+
+        if (!customerEmail && paymentIntent.latest_charge) {
+          const charge = await stripe.charges.retrieve(
+            paymentIntent.latest_charge as string,
+          );
+          customerEmail =
+            charge.billing_details?.email || charge.receipt_email || "N/A";
+        }
+
         // ✅ အတိုချုံ့ထားသော metadata (id, p, q, img) မှ Schema ပုံစံအတိုင်း ပြန် mapping လုပ်ခြင်း
         const formattedItems = cartItems.map((item: any) => ({
           product: item.id || item._id,
@@ -85,12 +111,9 @@ router.post(
           currency: paymentIntent.currency,
           paymentStatus: "paid",
           orderStatus: "Processing",
-          customerEmail:
-            paymentIntent.receipt_email ||
-            paymentIntent.metadata?.customerEmail ||
-            "N/A",
+          customerEmail: customerEmail || "N/A",
           items: formattedItems,
-          shippingAddress: shippingAddress,
+          shippingAddress: formattedShippingAddress,
         });
 
         await newOrder.save();

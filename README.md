@@ -1,193 +1,137 @@
-# MERN Ecommerce Project
+# MERN Ecommerce
 
-This repository contains a full-stack ecommerce application built with the MERN stack:
+Full-stack ecommerce application with a TypeScript Express API, MongoDB persistence, Stripe payments, and a Next.js storefront with an admin dashboard.
 
-- MongoDB
-- Express.js
-- React
-- Node.js
+## Applications
 
-The project is split into two main parts:
-
-- `backend/` — Express API, MongoDB models, auth, Stripe integration, and seed data
-- `frontend/` — Next.js storefront and admin dashboard
+- `backend/` - Express API, MongoDB models, authentication, product and order operations, Stripe payment intents, and webhook processing.
+- `frontend/` - Next.js App Router storefront, authentication screens, cart and checkout flow, and admin product and order dashboards.
 
 ## Tech Stack
 
 ### Backend
 
-- Node.js
-- Express.js
+- Node.js and Express 5
 - TypeScript
-- MongoDB + Mongoose
-- JWT + cookie auth
-- Stripe API
-- Zod validation
+- MongoDB with Mongoose
+- JWT authentication in HTTP-only cookies
+- Zod request validation
+- Stripe API and webhooks
 
 ### Frontend
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- Shadcn UI
-- Axios
+- Next.js 16 with the App Router
+- React 19 and TypeScript
+- Tailwind CSS and shadcn/ui components
+- Axios for API requests
+- Stripe Elements for checkout
 
-## Project Structure
+## Prerequisites
 
-```text
-mern-ecommerce/
-├── backend/
-│   ├── src/
-│   ├── .env
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
-├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── context/
-│   ├── lib/
-│   ├── public/
-│   ├── .env.local
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
-├── README.md
-├── SPEC.md
-└── .git/
-```
-
-## Features
-
-- Product catalog homepage
-- Product creation, update, and deletion in admin panel
-- User registration and login
-- JWT authentication with cookies
-- Cart and checkout flow
-- Stripe payment intent generation
-- Payment success page
-- Webhook-based order creation for successful Stripe payments
-- Seed script for sample product dataset
-
-## Requirements
-
-Before running the project, make sure you have:
-
-- Node.js 18+
+- Node.js 18 or newer
 - npm
-- MongoDB running locally
-- Stripe test keys for payment testing
+- MongoDB, local or hosted
+- Stripe test-mode API keys
 
 ## Quick Start
 
-### 1. Start the backend
+1. Start MongoDB.
+2. Configure `backend/.env` and `frontend/.env.local` using the examples below.
+3. Install and start the backend:
 
-```bash
-cd backend
-npm install
-npm run dev
-```
+   ```bash
+   cd backend
+   npm install
+   npm run seed
+   npm run dev
+   ```
 
-The backend runs on:
+4. In a second terminal, install and start the frontend:
 
-```text
-http://localhost:5000
-```
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-### 2. Start the frontend
+Open `http://localhost:3000`. The API is available at `http://localhost:5000`.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## Environment Variables
 
-The frontend runs on:
-
-```text
-http://localhost:3000
-```
-
-### 3. Seed demo data
-
-```bash
-cd backend
-npm run seed
-```
-
-This adds sample products so the storefront has content.
-
-## Environment Files
-
-### Backend
-
-The backend uses a `.env` file with values such as:
+### `backend/.env`
 
 ```env
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/mern-ecommerce
 JWT_SECRET=your_jwt_secret
 STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_webhook_secret
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 NODE_ENV=development
 ADMIN_SECRET_KEY=your_admin_secret_key
 ```
 
-### Frontend
-
-The frontend uses `.env.local` for client-side variables:
+### `frontend/.env.local`
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
-## Main Routes
+Keep secret values out of source control. The frontend and backend must use matching hosts and cookie/CORS settings for authentication to work.
 
-### Frontend
+## Features
 
-- `/` — storefront homepage
-- `/login` — login page
-- `/register` — registration page
-- `/checkout` — cart and checkout
-- `/success` — payment success page
-- `/dashboard/products` — admin product list
-- `/dashboard/products/new` — create product
-- `/dashboard/products/[id]/edit` — edit product
+- Public product catalog with category filtering, name search, and pagination
+- User registration, login, logout, and current-user lookup
+- JWT cookie authentication with user and admin roles
+- Cart and Stripe payment-intent checkout
+- Stripe webhook handling that creates paid orders idempotently
+- Admin product creation, editing, and deletion screens
+- Admin order list, order detail, filtering, search, pagination, and status updates
+- Seed data for local product browsing
 
-### Backend API
+## Frontend Routes
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `GET /api/products`
-- `GET /api/products/:id`
-- `POST /api/products`
-- `PUT /api/products/:id`
-- `DELETE /api/products/:id`
-- `POST /api/payment/create-payment-intent`
-- `POST /api/orders`
-- `POST /api/webhook`
+- `/` - storefront
+- `/login` and `/register` - authentication
+- `/products/[id]` - product detail
+- `/checkout` - cart and checkout
+- `/success` - payment success
+- `/dashboard/products` - admin product list
+- `/dashboard/products/new` - create a product
+- `/dashboard/products/[id]/edit` - edit a product
+- `/dashboard/orders` - admin order list
+- `/dashboard/orders/[id]` - admin order detail and status management
 
-## Notes
+## Backend API
 
-- The frontend depends on the backend running on port 5000.
-- Auth uses cookies, so the frontend must be allowed to send credentials to the backend.
-- Stripe webhook verification requires raw JSON payload handling and a valid webhook secret.
-- The project is designed for local development and demo usage.
+All API routes are prefixed with `/api`.
 
-## Recommended Development Flow
+- Auth: `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`
+- Products: `GET /products`, `GET /products/:id`, `POST /products`, `PUT /products/:id`, `DELETE /products/:id`
+- Payments: `POST /payment/create-payment-intent`
+- Orders: `POST /orders`, `GET /orders`, `GET /orders/:id`, `PATCH /orders/:id/status`
+- Stripe webhook: `POST /webhook`
 
-1. Run MongoDB.
-2. Start the backend.
-3. Run the seed script.
-4. Start the frontend.
-5. Log in or register a user.
-6. Browse products, add to cart, and complete checkout with Stripe.
+Product reads are public. Product mutations and order administration are admin operations and require the authenticated admin cookie in the intended application flow. The webhook requires Stripe's raw request body and a valid signature.
 
-## Related Docs
+## Development Commands
 
-- [backend/README.md](backend/README.md)
-- [frontend/README.md](frontend/README.md)
+Backend:
+
+```bash
+npm run dev
+npm run build
+npm run seed
+```
+
+Frontend:
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
+
+See [backend/README.md](backend/README.md), [frontend/README.md](frontend/README.md), and [SPEC.md](SPEC.md) for application-specific details.

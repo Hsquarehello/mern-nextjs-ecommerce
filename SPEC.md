@@ -2,229 +2,145 @@
 
 ## 1. Overview
 
-This project is a full-stack ecommerce application developed as a monorepo with separate backend and frontend applications. The solution supports browsing products, authenticating users, managing cart data, initiating Stripe payments, and administrating catalog products.
-
-The application is intended to demonstrate a modern MERN-based architecture with secure API conventions and a polished storefront UI.
+MERN Ecommerce is a monorepo containing a TypeScript Express API and a Next.js storefront. Customers can browse products, authenticate, manage a cart, and pay through Stripe. Administrators can manage products and review and update orders.
 
 ## 2. Goals
 
-- Provide a product catalog storefront for customers
-- Enable user registration and login
-- Safely protect admin functionality
-- Support order creation and Stripe checkout
-- Provide a clean frontend experience with reusable UI components
-- Offer a scalable backend API with validation and error handling
+- Provide a searchable, paginated product storefront.
+- Support secure user and admin authentication with HTTP-only JWT cookies.
+- Provide a Stripe payment-intent checkout flow.
+- Persist paid orders from verified Stripe webhook events.
+- Give administrators product and order management workflows.
+- Keep API validation, error handling, and feature boundaries explicit.
 
 ## 3. Scope
 
 ### In Scope
 
-- Product listing and filtering
-- Product CRUD operations for admins
-- Auth flow for users and admins
-- Cart and checkout experience
-- Stripe payment intent integration
-- Database seeding for demo products
-- API and UI error handling
+- Public product listing, search, category filtering, pagination, and detail pages
+- User registration, login, logout, and current-user lookup
+- User and admin roles, including admin registration using a server-side secret
+- Cart and shipping-address checkout
+- Stripe payment intents and verified payment webhooks
+- Order creation, admin listing, detail lookup, filtering, search, pagination, and status updates
+- Admin product create, read, update, and delete operations
+- Seed data for local development
 
 ### Out of Scope
 
-- Advanced analytics dashboards
-- Real multi-tenant marketplace features
-- Deployment infrastructure configuration
-- Payment refunds and subscriptions beyond basics
-- Social login or third-party auth providers
+- Analytics and reporting dashboards
+- Multi-vendor marketplace behavior
+- Deployment and infrastructure configuration
+- Refunds, subscriptions, and advanced payment workflows
+- Social login and external identity providers
 
 ## 4. Architecture
 
 ### Backend
 
-The backend is an Express.js API written in TypeScript. It exposes REST endpoints and uses Mongoose models for MongoDB persistence.
-
-Core responsibilities:
-
-- database connection and environment configuration
-- authentication and authorization
-- validation using Zod
-- product management
-- payment intent creation using Stripe
-- webhook handling for payment success events
-- centralized error middleware
+The backend is an Express 5 REST API written in TypeScript. It uses Mongoose for MongoDB persistence, Zod at validation boundaries, cookie-based JWT authentication, and centralized async/error handling. Stripe webhook routes are registered before `express.json()` so their raw request body remains available for signature verification.
 
 ### Frontend
 
-The frontend is a Next.js application using the App Router. It communicates with the backend via Axios and manages app state through React context providers.
-
-Core responsibilities:
-
-- product browsing and display
-- login and registration forms
-- stateful cart behavior
-- Stripe checkout UI
-- admin dashboard for catalog management
+The frontend is a Next.js 16 App Router application. Axios communicates with the API, while React context manages authentication and cart state. Reusable UI primitives and feature components support the storefront, checkout, and admin dashboard.
 
 ## 5. Functional Requirements
 
 ### 5.1 Product Catalog
 
-- Users can view a homepage listing of products.
-- Products can be filtered or searched using backend query parameters.
-- Products can be created, edited, and deleted by admin users.
-- Product data includes name, description, price, stock, category, images, and featured flag.
+- Anyone can retrieve products and individual product details.
+- Product listing accepts optional `page`, `limit`, `category`, and `search` query parameters.
+- Product responses include `data`, `total`, `page`, `limit`, and `totalPages`.
+- Products contain `name`, `description`, `price`, `category`, `stock`, `imageUrl`, and `isFeatured`.
+- Admin users can create, edit, and delete products through the dashboard.
 
 ### 5.2 Authentication
 
-- New users can register with name, email, and password.
-- Existing users can log in using email and password.
-- JWT tokens are stored in HTTP-only cookies.
-- Logged-in users can fetch their own profile.
-- Admin users can be created by providing a valid admin secret key.
+- Registration requires name, email, and password.
+- Registration defaults to the `user` role.
+- Admin registration additionally requires the server-side `ADMIN_SECRET_KEY`.
+- Login and registration issue a JWT in an HTTP-only cookie valid for seven days.
+- Logout clears the authentication cookie.
+- `GET /api/auth/me` returns the authenticated user's id, name, email, and role.
 
 ### 5.3 Checkout and Payments
 
-- Users can add products to a cart.
-- The frontend creates a Stripe payment intent through the backend.
-- The backend calculates the total amount from cart items.
-- Successful payments are processed via Stripe webhooks.
-- Orders are stored in MongoDB after successful payment confirmation.
+- Users can add products to a client-side cart and provide shipping information.
+- The frontend sends cart items, shipping address, email, and currency to the payment endpoint.
+- The backend calculates the total from item price and quantity and returns a Stripe client secret.
+- Stripe `payment_intent.succeeded` events are verified with `STRIPE_WEBHOOK_SECRET`.
+- A verified successful event creates one paid order, guarded by the unique payment intent id.
 
-### 5.4 Admin Operations
+### 5.4 Orders
 
-- Admin users can access product management pages.
-- Admin users can add new products.
-- Admin users can update existing products.
-- Admin users can remove products.
+- Authenticated checkout can create an order record through `POST /api/orders`.
+- Admins can list orders with `page`, `limit`, `status`, and `search` filters.
+- Admins can inspect an order and update its status.
+- Order statuses are `Processing`, `Shipped`, `Delivered`, and `Cancelled`.
 
-## 6. Non-Functional Requirements
+### 5.5 Admin Operations
 
-### Performance
+- Admin users can access product and order dashboard routes.
+- Product mutation and order administration endpoints must enforce authenticated admin access.
+- The UI must show useful loading, empty, validation, and API error states.
 
-- Product requests should respond quickly for typical storefront usage.
-- Database queries should use pagination and filtering where appropriate.
-
-### Security
-
-- API routes must validate request data.
-- Authenticated routes must verify tokens before accessing protected resources.
-- Sensitive values such as secret keys must remain in environment variables.
-- Stripe webhook payloads must be verified using signature checks.
-
-### Maintainability
-
-- Code should be split logically into controllers, routes, models, and middleware.
-- Shared types and validation logic should be reused across frontend/backend boundaries where possible.
-- TypeScript should be used for safer development and clearer contracts.
-
-## 7. Data Model
+## 6. Data Model
 
 ### User
 
-- name
-- email
-- password
-- role
-- createdAt
-- updatedAt
+`name`, `email`, `password`, `role` (`user` or `admin`), `createdAt`, `updatedAt`
 
 ### Product
 
-- name
-- description
-- price
-- category
-- stock
-- images
-- isFeatured
-- createdAt
-- updatedAt
+`name`, `description`, `price`, `category`, `stock`, `imageUrl`, `isFeatured`, `createdAt`, `updatedAt`
 
 ### Order
 
-- paymentIntentId
-- amount
-- currency
-- status
-- customerEmail
-- items
-- createdAt
-- updatedAt
+`user`, `paymentIntentId`, `amount`, `currency`, `paymentStatus`, `orderStatus`, `customerEmail`, `shippingAddress`, `items`, `createdAt`, `updatedAt`
 
-## 8. API Contract Summary
+Order item fields are `product`, `name`, `price`, `quantity`, and `imageUrl`. Shipping address fields are `fullName`, `address`, `city`, `postalCode`, and `phone`.
 
-### Authentication
+## 7. API Contract Summary
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
+| Method | Path                                 | Access                  | Purpose                         |
+| ------ | ------------------------------------ | ----------------------- | ------------------------------- |
+| POST   | `/api/auth/register`                 | Public                  | Register and issue auth cookie  |
+| POST   | `/api/auth/login`                    | Public                  | Log in and issue auth cookie    |
+| POST   | `/api/auth/logout`                   | Public                  | Clear auth cookie               |
+| GET    | `/api/auth/me`                       | Authenticated           | Return current user             |
+| GET    | `/api/products`                      | Public                  | List filtered products          |
+| GET    | `/api/products/:id`                  | Public                  | Get one product                 |
+| POST   | `/api/products`                      | Admin                   | Create product                  |
+| PUT    | `/api/products/:id`                  | Admin                   | Update product                  |
+| DELETE | `/api/products/:id`                  | Admin                   | Delete product                  |
+| POST   | `/api/payment/create-payment-intent` | Public or authenticated | Create Stripe client secret     |
+| POST   | `/api/orders`                        | Authenticated           | Create an order                 |
+| GET    | `/api/orders`                        | Admin                   | List orders                     |
+| GET    | `/api/orders/:id`                    | Admin                   | Get order details               |
+| PATCH  | `/api/orders/:id/status`             | Admin                   | Update order status             |
+| POST   | `/api/webhook`                       | Stripe                  | Process verified payment events |
 
-### Products
+## 8. Local Acceptance Criteria
 
-- `GET /api/products`
-- `GET /api/products/:id`
-- `POST /api/products`
-- `PUT /api/products/:id`
-- `DELETE /api/products/:id`
+- MongoDB and required environment variables allow the backend to build and start.
+- Seed data appears in the storefront after running `npm run seed`.
+- Customers can register, log in, browse, search, filter, and paginate products.
+- Admins can manage products and view, filter, search, paginate, and update orders.
+- Checkout returns a Stripe client secret for a non-empty cart.
+- A verified successful Stripe webhook creates one paid order per payment intent.
+- Both services run locally at ports 5000 and 3000 by default.
 
-### Payments
+## 9. Constraints
 
-- `POST /api/payment/create-payment-intent`
+- Never commit MongoDB, JWT, Stripe, or admin secret values.
+- Cookie auth requires frontend/backend CORS and credential configuration to match.
+- Stripe webhook requests must retain their raw JSON body.
+- Product and order administration must remain restricted to admin users.
 
-### Orders
-
-- `POST /api/orders`
-
-### Webhooks
-
-- `POST /api/webhook`
-
-## 9. Frontend User Journeys
-
-### Customer Journey
-
-1. User visits home page.
-2. User browses product cards.
-3. User adds products to cart.
-4. User proceeds to checkout.
-5. User completes payment with Stripe.
-6. User sees a success page.
-
-### Admin Journey
-
-1. Admin logs in.
-2. Admin opens dashboard.
-3. Admin creates, edits, or deletes products.
-4. Product list updates in the UI.
-
-## 10. Acceptance Criteria
-
-- The backend starts successfully when MongoDB and environment variables are configured.
-- The frontend loads product data from the backend API.
-- Users can register and log in successfully.
-- Admins can manage products through the dashboard.
-- Stripe payment intents can be created for cart data.
-- Webhook events can update order records after successful payments.
-- The app runs locally with both backend and frontend services started.
-
-## 11. Risks and Constraints
-
-- Local MongoDB must be available for development.
-- Stripe secrets must stay private and not be committed to source control.
-- Cookie-based auth requires correct CORS and credentials configuration between frontend and backend.
-- Webhook verification depends on the correct `STRIPE_WEBHOOK_SECRET` value.
-
-## 12. Implementation Notes
-
-- Use a Node.js backend and a Next.js frontend in the same repository.
-- Keep backend routes modular and organized around features.
-- Use validation at the API boundary to prevent malformed data.
-- Use global error handling for consistent API responses.
-- Keep frontend state management lightweight and focused on auth and cart functionality.
-
-## 13. Deliverables
+## 10. Deliverables
 
 - Backend API service
-- Frontend storefront application
-- Seed script for demo product data
+- Next.js storefront and admin dashboard
+- Seed script with demo products
 - Environment variable documentation
-- Root documentation and project specification
+- Root README, application READMEs, and this specification

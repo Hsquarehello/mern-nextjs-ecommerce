@@ -1,110 +1,96 @@
-# MERN Store Frontend
+# Ecommerce Frontend
 
-This is the Next.js frontend for the MERN ecommerce application. It handles the customer storefront, login/register flow, cart, Stripe checkout, and the admin product dashboard.
+Next.js 16 storefront and admin dashboard for the ecommerce application. It consumes the sibling Express API for products, authentication, payments, and orders.
 
-## Tech Stack
+## Stack
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- Shadcn UI components
-- Axios for API requests
-- Stripe for checkout payments
-
-## Project Structure
-
-- `app/` — route pages using the App Router
-- `components/` — reusable UI and feature components
-- `context/` — auth and cart state
-- `lib/` — validation helpers and utility functions
-- `types/` — shared TypeScript types
-
-## Main Features
-
-- Product catalog homepage
-- User authentication with login/register
-- Cart and checkout flow
-- Stripe payment success page
-- Admin dashboard for products
-- Dynamic product creation and editing
+- Next.js 16 App Router
+- React 19 and TypeScript
+- Tailwind CSS and shadcn/ui
+- Axios
+- Stripe Elements
+- React Hook Form and Zod
 
 ## Prerequisites
 
-Before starting the frontend, make sure the backend is running and MongoDB is connected.
-
-- Node.js 18+
+- Node.js 18 or newer
 - npm
-- Backend API running on `http://localhost:5000`
+- Backend running at `http://localhost:5000`
+- MongoDB connected through the backend
 
-## Environment Variables
-
-Create a `.env.local` file inside this folder with the following values:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
-```
-
-If the backend runs on a different port or host, update `NEXT_PUBLIC_API_URL` accordingly.
-
-## Installation
-
-From the `frontend` directory:
+## Setup
 
 ```bash
 npm install
 ```
 
-## Run the App
+Create `frontend/.env.local`:
 
-Start the development server:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+```
+
+Update `NEXT_PUBLIC_API_URL` if the API uses a different host or port.
+
+## Commands
 
 ```bash
-npm run dev
+npm run dev    # development server
+npm run build  # production build
+npm run start  # serve the production build
+npm run lint   # ESLint
 ```
 
-Then open:
+Open `http://localhost:3000` after starting the development server.
 
-```text
-http://localhost:3000
-```
+## Routes
 
-## Useful Commands
+### Customer
 
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-```
+- `/` - product storefront
+- `/products/[id]` - product detail
+- `/login` - login
+- `/register` - registration
+- `/checkout` - cart and Stripe checkout
+- `/success` - successful payment confirmation
 
-## Related Backend Setup
+### Admin
 
-The frontend depends on the backend API. In a separate terminal, run:
+- `/dashboard/products` - product list and management actions
+- `/dashboard/products/new` - create a product
+- `/dashboard/products/[id]/edit` - edit a product
+- `/dashboard/orders` - searchable, filterable, paginated order list
+- `/dashboard/orders/[id]` - order detail and status management
+
+Admin pages require an authenticated admin account. Registering an admin also requires the server-side admin secret configured in the backend.
+
+## Application Areas
+
+- `app/` - App Router pages and layouts
+- `components/` - shared, storefront, checkout, and dashboard components
+- `context/` - auth and cart providers
+- `hooks/` - reusable client hooks
+- `lib/` - utilities and validation helpers
+- `types/` - frontend TypeScript types
+
+## Backend
+
+Start the API in a separate terminal:
 
 ```bash
 cd ../backend
 npm install
-npm run dev
 npm run seed
+npm run dev
 ```
 
-The seed script populates product data so the homepage can display items.
+The seed command adds demo products for the storefront. Cookie authentication depends on the frontend and backend running on the configured hosts and allowing credentials.
 
-## Routes
+## Troubleshooting
 
-- `/` — home page with products
-- `/login` — login page
-- `/register` — register page
-- `/checkout` — cart and checkout
-- `/success` — Stripe payment success page
-- `/dashboard/products` — admin product list
-- `/dashboard/products/new` — create product
-- `/dashboard/products/[id]/edit` — edit product
+- Empty product pages: confirm MongoDB is running, seed data exists, and `NEXT_PUBLIC_API_URL` is correct.
+- Failed login or admin pages: confirm the API is running and browser cookies are allowed for the configured frontend/backend hosts.
+- Checkout errors: confirm both Stripe publishable and secret keys are configured and that the backend webhook secret matches Stripe.
 
-## Notes
-
-- The app uses the backend cookie-based auth flow, so credentials and session management must be enabled in the backend.
-- Stripe keys are required for the checkout experience to work properly.
-- If products do not load, confirm the backend is running and the API URL is correct.
+See the repository [README.md](../README.md) and [SPEC.md](../SPEC.md) for the complete application overview and API contract.

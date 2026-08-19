@@ -3,16 +3,18 @@
 import React, { useState } from "react";
 import {
   PaymentElement,
+  LinkAuthenticationElement,
+  AddressElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
 
-// Shadcn UI & Base UI Components
+// Shadcn UI Components & Lucide Icons
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 
 interface CheckoutFormProps {
-  amount?: number; // Total Amount (Optional)
+  amount?: number;
 }
 
 export default function CheckoutForm({ amount }: CheckoutFormProps) {
@@ -42,10 +44,9 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
       return;
     }
 
-    // Dynamic Origin URL ကို ရယူခြင်း (Localhost သို့မဟုတ် Production Domain)
     const redirectUrl = `${window.location.origin}/success`;
 
-    // Stripe ဖြင့် Payment ကို Confirm ပြုလုပ်ခြင်း
+    // 2. Stripe Payment Confirm ပြုလုပ်ခြင်း
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
@@ -53,7 +54,6 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
       },
     });
 
-    // Error ရှိပါကသာ ဤနေရာသို့ ရောက်ရှိမည် ဖြစ်ပြီး အောင်မြင်ပါက /success သို့ အလိုအလျောက် Redirect ဖြစ်သွားမည်
     if (error) {
       if (error.type === "card_error" || error.type === "validation_error") {
         setErrorMessage(
@@ -67,10 +67,35 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Stripe Payment Element */}
-      <div className="p-4 rounded-xl border bg-card text-card-foreground shadow-sm">
-        <PaymentElement />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* 1. Customer Email (Guest User များအတွက် Email တောင်းရန်) */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground block">
+          Contact Information
+        </label>
+        <div className="p-3.5 rounded-xl border bg-card text-card-foreground shadow-sm">
+          <LinkAuthenticationElement />
+        </div>
+      </div>
+
+      {/* 2. Shipping Address (ပို့ဆောင်ရမည့် လိပ်စာ တောင်းရန်) */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground block">
+          Shipping Address
+        </label>
+        <div className="p-3.5 rounded-xl border bg-card text-card-foreground shadow-sm">
+          <AddressElement options={{ mode: "shipping" }} />
+        </div>
+      </div>
+
+      {/* 3. Stripe Payment Element (Card / Other Payment Methods) */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-foreground block">
+          Payment Details
+        </label>
+        <div className="p-3.5 rounded-xl border bg-card text-card-foreground shadow-sm">
+          <PaymentElement />
+        </div>
       </div>
 
       {/* Error Message Display */}
@@ -81,7 +106,7 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
         </div>
       )}
 
-      {/* Submit Button using Base UI Button Component */}
+      {/* Submit Button */}
       <Button
         type="submit"
         disabled={!stripe || isProcessing}

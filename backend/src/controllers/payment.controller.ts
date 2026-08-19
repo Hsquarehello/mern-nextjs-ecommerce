@@ -17,6 +17,8 @@ export const createPaymentIntent = asyncHandler(
       currency = "usd",
     } = req.body;
 
+
+
     if (!items || !Array.isArray(items) || items.length === 0) {
       res
         .status(400)
@@ -52,11 +54,11 @@ export const createPaymentIntent = asyncHandler(
       // ⚠️ Webhook မှ DB Order ဆောက်ရန်အတွက် metadata ထည့်သွင်းပေးခြင်း
       metadata: {
         userId: userId ? userId.toString() : "",
-        customerEmail: customerEmail || "",
         items: JSON.stringify(metadataItems),
-        shippingAddress: shippingAddress ? JSON.stringify(shippingAddress) : "",
       },
     });
+
+    console.log(paymentIntent)
 
     res.status(200).json({ clientSecret: paymentIntent.client_secret });
   },
