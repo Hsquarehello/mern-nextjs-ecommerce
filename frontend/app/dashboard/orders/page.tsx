@@ -14,6 +14,8 @@ import {
   Clock,
   Truck,
   XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import {
@@ -42,7 +44,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 
 // Types Definition
 interface IOrderItem {
@@ -68,36 +76,71 @@ interface IOrder {
   createdAt: string;
 }
 
+interface IPagination {
+  totalOrders: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 export default function AdminOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Pagination & Filter States
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [pagination, setPagination] = useState<IPagination>({
+    totalOrders: 0,
+    totalPages: 1,
+    currentPage: 1,
+    limit: 10,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
 
   const API_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-  // Order များ ဆွဲထုတ်သည့် Function
+  // Order များ ဆွဲထုတ်သည့် Function (Server-side Pagination & Filtering)
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const url =
-        statusFilter !== "all"
-          ? `${API_URL}/orders?status=${statusFilter}`
-          : `${API_URL}/orders`;
 
-      const response = await axios.get(url, { withCredentials: true });
-      if (response.data) {
-        setOrders(response.data);
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+
+      if (statusFilter !== "all") {
+        params.append("status", statusFilter);
+      }
+      if (searchTerm.trim() !== "") {
+        params.append("search", searchTerm.trim());
+      }
+
+      const response = await axios.get(
+        `${API_URL}/orders?${params.toString()}`,
+        {
+          withCredentials: true,
+        },
+      );
+
+      if (response.data?.success) {
+        setOrders(response.data.orders);
+        setPagination(response.data.pagination);
       }
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {
       setLoading(false);
     }
-  }, [API_URL, statusFilter]);
+  }, [API_URL, page, limit, statusFilter, searchTerm]);
 
   useEffect(() => {
     fetchOrders();
@@ -129,7 +172,7 @@ export default function AdminOrdersPage() {
     }
   };
 
-  // Status Badge Helper Component (Shadcn UI Standard)
+  // Status Badge Helper Component
   const renderStatusBadge = (status: string) => {
     switch (status) {
       case "Processing":
@@ -169,22 +212,6 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    // ၁။ Search term စစ်ဆေးခြင်း
-    const email = order.user?.email || order.customerEmail || "";
-    const orderId = order._id || "";
-    const matchesSearch =
-      email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      orderId.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // ၂။ Status filter စစ်ဆေးခြင်း
-    const matchesStatus =
-      statusFilter === "all" || order.orderStatus === statusFilter;
-
-    // နှစ်ခုလုံး ကိုက်ညီမှ ပြသမည်
-    return matchesSearch && matchesStatus;
-  });
-
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header Section */}
@@ -221,7 +248,10 @@ export default function AdminOrdersPage() {
               placeholder="Search by Order ID or Email..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1); // Search ပြောင်းလဲပါက Page 1 သို့ ပြန်စမည်
+              }}
             />
           </div>
           <Select
@@ -229,6 +259,7 @@ export default function AdminOrdersPage() {
             onValueChange={(val) => {
               if (val) {
                 setStatusFilter(val);
+                setPage(1); // Filter ပြောင်းလဲပါက Page 1 သို့ ပြန်စမည်
               }
             }}>
             <SelectTrigger className="w-full sm:w-45">
@@ -269,7 +300,7 @@ export default function AdminOrdersPage() {
                     Loading orders...
                   </TableCell>
                 </TableRow>
-              ) : filteredOrders.length === 0 ? (
+              ) : orders.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -278,7 +309,7 @@ export default function AdminOrdersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredOrders.map((order) => (
+                orders.map((order) => (
                   <TableRow key={order._id}>
                     <TableCell className="font-mono text-xs font-semibold">
                       #{order._id?.slice(-6).toUpperCase()}
@@ -363,6 +394,54 @@ export default function AdminOrdersPage() {
             </TableBody>
           </Table>
         </CardContent>
+
+        {/* Pagination Section */}
+        <CardFooter className="flex items-center justify-between border-t p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              Showing {orders.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+              {Math.min(page * limit, pagination.totalOrders)} of{" "}
+              {pagination.totalOrders} entries
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(val) => {
+                setLimit(Number(val));
+                setPage(1);
+              }}>
+              <SelectTrigger className="w-18 h-8 text-xs">
+                <SelectValue placeholder={limit.toString()} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-xs">per page</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={!pagination.hasPrevPage || loading}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+            </Button>
+            <div className="text-xs font-medium px-2">
+              Page {pagination.currentPage} of {pagination.totalPages || 1}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((prev) => prev + 1)}
+              disabled={!pagination.hasNextPage || loading}>
+              Next <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

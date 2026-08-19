@@ -31,11 +31,49 @@ export const createOrder = asyncHandler(
 // 2. [ADMIN] Order အားလုံးကို ဆွဲထုတ်ခြင်း
 export const getAllOrders = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const orders = await Order.find()
-      .populate("user", "name email")
-      .sort({ createdAt: -1 });
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 10);
+    const skip = (page - 1) * limit;
 
-    res.status(200).json(orders);
+    const status = req.query.status as string; // ဥပမာ - Processing, Shipped, Delivered, Cancelled
+    const search = req.query.search as string;
+
+    const query: any = {};
+
+    if (status && status.toLocaleLowerCase() !== "all") {
+      query.orderStatus = status;
+    }
+
+    if (search) {
+      query.$or = [
+        { customerEmail: { $regex: search, $options: "i" } },
+        { paymentIntentId: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(query)
+        .populate("user", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Order.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.status(200).json({
+      success: true,
+      orders,
+      pagination: {
+        totalOrders,
+        totalPages,
+        currentPage: page,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
   },
 );
 
