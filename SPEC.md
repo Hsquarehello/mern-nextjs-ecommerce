@@ -54,7 +54,17 @@ The frontend is a Next.js 16 App Router application. Axios communicates with the
 - Products contain `name`, `description`, `price`, `category`, `stock`, `imageUrl`, and `isFeatured`.
 - Admin users can create, edit, and delete products through the dashboard.
 
-### 5.2 Authentication
+### 5.2 Customer Search
+
+- The navbar provides a search icon that links to `/search`.
+- The search page provides a focused search input and submits queries through the browser URL as `/search?q=<term>`.
+- The search input receives focus when the page opens so customers can begin typing immediately after selecting the navbar search icon.
+- Search requests are debounced by approximately 400 milliseconds after typing stops to avoid unnecessary API requests.
+- Search results use the public `GET /api/products` endpoint and pass the `search`, `page`, and `limit` query parameters.
+- The page displays loading, error, empty-result, result-count, and pagination states.
+- Search results reuse the storefront product card and link to the product detail page.
+
+### 5.3 Authentication
 
 - Registration requires name, email, and password.
 - Registration defaults to the `user` role.
@@ -63,7 +73,7 @@ The frontend is a Next.js 16 App Router application. Axios communicates with the
 - Logout clears the authentication cookie.
 - `GET /api/auth/me` returns the authenticated user's id, name, email, and role.
 
-### 5.3 Checkout and Payments
+### 5.4 Checkout and Payments
 
 - Users can add products to a client-side cart and provide shipping information.
 - The frontend sends cart items, shipping address, email, and currency to the payment endpoint.
@@ -71,14 +81,14 @@ The frontend is a Next.js 16 App Router application. Axios communicates with the
 - Stripe `payment_intent.succeeded` events are verified with `STRIPE_WEBHOOK_SECRET`.
 - A verified successful event creates one paid order, guarded by the unique payment intent id.
 
-### 5.4 Orders
+### 5.5 Orders
 
 - Authenticated checkout can create an order record through `POST /api/orders`.
 - Admins can list orders with `page`, `limit`, `status`, and `search` filters.
 - Admins can inspect an order and update its status.
 - Order statuses are `Processing`, `Shipped`, `Delivered`, and `Cancelled`.
 
-### 5.5 Admin Operations
+### 5.6 Admin Operations
 
 - Admin users can access product and order dashboard routes.
 - Product mutation and order administration endpoints must enforce authenticated admin access.
@@ -125,6 +135,8 @@ Order item fields are `product`, `name`, `price`, `quantity`, and `imageUrl`. Sh
 - MongoDB and required environment variables allow the backend to build and start.
 - Seed data appears in the storefront after running `npm run seed`.
 - Customers can register, log in, browse, search, filter, and paginate products.
+- Customers can open `/search` from the navbar, type immediately without an additional input click, and receive debounced product results.
+- Search results preserve the query in the URL and support pagination through the backend product endpoint.
 - Admins can manage products and view, filter, search, paginate, and update orders.
 - Checkout returns a Stripe client secret for a non-empty cart.
 - A verified successful Stripe webhook creates one paid order per payment intent.
