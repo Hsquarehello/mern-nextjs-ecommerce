@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ShoppingCart,
+  Search,
   Store,
   LayoutDashboard,
   LogOut,
@@ -32,6 +33,16 @@ export default function Navbar() {
 
         {/* Navigation & Actions */}
         <div className="flex items-center gap-3">
+          {/* Customer Search */}
+          <Button
+            render={<Link href="/search" />}
+            variant="ghost"
+            size="icon"
+            aria-label="Search products"
+            title="Search products">
+            <Search className="h-4 w-4" />
+          </Button>
+
           {/* Admin Dashboard Link (Admin ဖြစ်မှသာ ပြမည်) */}
           {user && user.role === "admin" && (
             <Button
