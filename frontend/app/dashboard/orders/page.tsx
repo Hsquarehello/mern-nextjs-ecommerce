@@ -113,7 +113,7 @@ export default function AdminOrdersPage() {
         { withCredentials: true },
       );
 
-      if (response.data.success) {
+      if (response.data) {
         setOrders((prev) =>
           prev.map((ord) =>
             ord._id === orderId
@@ -169,14 +169,20 @@ export default function AdminOrdersPage() {
     }
   };
 
-  // Search Filter
   const filteredOrders = orders.filter((order) => {
+    // ၁။ Search term စစ်ဆေးခြင်း
     const email = order.user?.email || order.customerEmail || "";
     const orderId = order._id || "";
-    return (
+    const matchesSearch =
       email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      orderId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      orderId.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // ၂။ Status filter စစ်ဆေးခြင်း
+    const matchesStatus =
+      statusFilter === "all" || order.orderStatus === statusFilter;
+
+    // နှစ်ခုလုံး ကိုက်ညီမှ ပြသမည်
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -220,7 +226,11 @@ export default function AdminOrdersPage() {
           </div>
           <Select
             value={statusFilter}
-            onValueChange={(val) => setStatusFilter(val ?? "all")}>
+            onValueChange={(val) => {
+              if (val) {
+                setStatusFilter(val);
+              }
+            }}>
             <SelectTrigger className="w-full sm:w-45">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
@@ -302,9 +312,11 @@ export default function AdminOrdersPage() {
                       <Select
                         value={order.orderStatus}
                         disabled={updatingId === order._id}
-                        onValueChange={(value) =>
-                          handleStatusChange(order._id, value ?? "all")
-                        }>
+                        onValueChange={(value) => {
+                          if (value) {
+                            handleStatusChange(order._id, value);
+                          }
+                        }}>
                         <SelectTrigger className="w-35 h-8 text-xs">
                           {renderStatusBadge(order.orderStatus)}
                         </SelectTrigger>

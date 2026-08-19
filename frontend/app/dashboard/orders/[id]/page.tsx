@@ -135,7 +135,7 @@ export default function OrderDetailPage({
         { withCredentials: true },
       );
 
-      if (response.data.success) {
+      if (response.data) {
         setOrder((prev) =>
           prev
             ? { ...prev, orderStatus: newStatus as IOrder["orderStatus"] }
