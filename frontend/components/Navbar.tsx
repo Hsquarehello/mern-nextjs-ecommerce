@@ -224,16 +224,6 @@ export default function Navbar() {
           </Sheet>
         </div>
       </div>
-
-      <div className="mx-auto flex max-w-7xl px-4 pb-3 sm:px-8 md:hidden">
-        <Link
-          href="/search"
-          className="flex h-10 w-full items-center gap-3 rounded-full border border-border bg-muted/40 px-4 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted"
-          aria-label="Search products">
-          <Search className="size-4" />
-          <span>Search products</span>
-        </Link>
-      </div>
     </header>
   );
 }
