@@ -69,15 +69,19 @@ router.post(
         const userId = metadata.userId || undefined;
 
         const stripeShipping = paymentIntent.shipping;
+
+        const extractedPhone =
+          stripeShipping?.phone && stripeShipping.phone.trim() !== ""
+            ? stripeShipping.phone
+            : "N/A";
+
         const formattedShippingAddress = stripeShipping
           ? {
-              name: stripeShipping.name,
-              line1: stripeShipping.address?.line1 || "",
-              line2: stripeShipping.address?.line2 || "",
+              fullName: stripeShipping.name,
+              address: stripeShipping.address?.line1 || "",
               city: stripeShipping.address?.city || "",
-              state: stripeShipping.address?.state || "",
-              postal_code: stripeShipping.address?.postal_code || "",
-              country: stripeShipping.address?.country || "",
+              postalCode: stripeShipping.address?.postal_code || "",
+              phone: extractedPhone,
             }
           : undefined;
 

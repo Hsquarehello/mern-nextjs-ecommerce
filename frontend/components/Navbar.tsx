@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Search,
   Store,
+  Package,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -67,6 +68,17 @@ export default function Navbar() {
               className="hidden gap-2 rounded-full px-3 md:inline-flex">
               <LayoutDashboard className="size-4" />
               Dashboard
+            </Button>
+          )}
+
+          {user && (
+            <Button
+              render={<Link href="/orders" />}
+              variant="ghost"
+              size="sm"
+              className="hidden gap-2 rounded-full px-3 md:inline-flex">
+              <Package className="size-4" />
+              My Orders
             </Button>
           )}
 
@@ -165,6 +177,15 @@ export default function Navbar() {
                     className="justify-start gap-3 rounded-xl">
                     <LayoutDashboard className="size-4" />
                     Dashboard
+                  </Button>
+                )}
+                {user && (
+                  <Button
+                    render={<Link href="/orders" />}
+                    variant="ghost"
+                    className="justify-start gap-3 rounded-xl">
+                    <Package className="size-4" />
+                    My Orders
                   </Button>
                 )}
                 {user ? (

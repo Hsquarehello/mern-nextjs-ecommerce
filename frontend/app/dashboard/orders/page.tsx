@@ -320,7 +320,7 @@ export default function AdminOrdersPage() {
                           {order.user?.name || "Guest User"}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {order.user?.email || order.customerEmail || "N/A"}
+                          {order.customerEmail || order.user?.email || "N/A"}
                         </span>
                       </div>
                     </TableCell>

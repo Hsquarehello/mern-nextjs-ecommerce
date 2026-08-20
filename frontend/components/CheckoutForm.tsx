@@ -44,6 +44,22 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
       return;
     }
 
+    // ၂။ AddressElement မှ Details များကို ရယူခြင်း
+    const addressElement = elements.getElement(AddressElement);
+    let shippingName = "";
+    let shippingPhone = "";
+    let addressValue: any = null;
+
+    if (addressElement) {
+      const addressResult = await addressElement.getValue();
+      if (addressResult.complete) {
+        shippingName = addressResult.value.name;
+        // User ဖုန်းနံပါတ် ထည့်ခဲ့လျှင် ယူမည်၊ မထည့်ခဲ့လျှင် empty string ရမည်
+        shippingPhone = addressResult.value.phone || "";
+        addressValue = addressResult.value.address;
+      }
+    }
+
     const redirectUrl = `${window.location.origin}/success`;
 
     // 2. Stripe Payment Confirm ပြုလုပ်ခြင်း
@@ -51,6 +67,18 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
       elements,
       confirmParams: {
         return_url: redirectUrl,
+        shipping: {
+          name: shippingName,
+          phone: shippingPhone, // ဖုန်းနံပါတ် (ရှိရင် ပါမည်၊ မရှိရင် လွတ်နေမည်)
+          address: {
+            line1: addressValue?.line1 || "",
+            line2: addressValue?.line2 || "",
+            city: addressValue?.city || "",
+            state: addressValue?.state || "",
+            postal_code: addressValue?.postal_code || "",
+            country: addressValue?.country || "",
+          },
+        },
       },
     });
 
@@ -84,7 +112,19 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
           Shipping Address
         </label>
         <div className="p-3.5 rounded-xl border bg-card text-card-foreground shadow-sm">
-          <AddressElement options={{ mode: "shipping" }} />
+          <AddressElement
+            options={{
+              mode: "shipping",
+              fields: {
+                phone: "always", 
+              },
+              validation: {
+                phone: {
+                  required: "never",
+                },
+              },
+            }}
+          />
         </div>
       </div>
 

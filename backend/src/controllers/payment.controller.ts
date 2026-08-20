@@ -12,7 +12,6 @@ export const createPaymentIntent = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const {
       items,
-      shippingAddress,
       customerEmail,
       currency = "usd",
     } = req.body;
@@ -57,8 +56,6 @@ export const createPaymentIntent = asyncHandler(
         items: JSON.stringify(metadataItems),
       },
     });
-
-    console.log(paymentIntent)
 
     res.status(200).json({ clientSecret: paymentIntent.client_secret });
   },

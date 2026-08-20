@@ -281,9 +281,7 @@ export default function OrderDetailPage({
                 <TableBody>
                   {order.items.map((item, index) => {
                     const imageSrc = item.imageUrl || "/placeholder.png";
-                    console.log(order);
-                    const itemTotal =
-                      (item.price ?? 0) * item.quantity;
+                    const itemTotal = (item.price ?? 0) * item.quantity;
 
                     return (
                       <TableRow key={item._id || index}>
@@ -372,8 +370,8 @@ export default function OrderDetailPage({
                   {order.user?.name || "Guest Checkout"}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {order.user?.email ||
-                    order.customerEmail ||
+                  {order.customerEmail ||
+                    order.user?.email ||
                     "No Email Provided"}
                 </p>
               </div>

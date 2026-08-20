@@ -110,3 +110,71 @@ export const updateOrderStatus = asyncHandler(
     res.status(200).json(updatedOrder);
   },
 );
+
+// 2. [CUSTOMER] Get logged-in user's order history with pagination
+export const getMyOrders = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    if (!req.user?._id) {
+      throw new AppError("User not authenticated", 401);
+    }
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 10);
+    const skip = (page - 1) * limit;
+
+    const query = { user: req.user._id };
+
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Order.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.status(200).json({
+      success: true,
+      orders,
+      pagination: {
+        totalOrders,
+        totalPages,
+        currentPage: page,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  },
+);
+
+// [CUSTOMER] Get single order details for logged-in user
+export const getMyOrderById = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    // 1. req.params ထဲမှ id ကို ဆွဲထုတ်ပါသည်
+    const { id } = req.params;
+
+    // 2. User Authentication ရှိမရှိ စစ်ဆေးပါသည်
+    if (!req.user?._id) {
+      throw new AppError("User not authenticated", 401);
+    }
+
+    // 3. id သည် string သီးသန့် ဟုတ်မဟုတ်နှင့် undefined မဟုတ်ကြောင်း စစ်ဆေးပါသည်
+    // ဤသို့ စစ်ဆေးလိုက်ခြင်းဖြင့် TypeScript Error ကို ပြေလည်စေပါသည်။
+    if (!id || typeof id !== "string") {
+      throw new AppError("Invalid or missing order ID", 400);
+    }
+
+    // 4. Mongoose Query သို့ ပို့ဆောင်ပါသည် (id မှာ string ဖြစ်ကြောင်း သေချာသွားပြီ ဖြစ်သည်)
+    const order = await Order.findOne({
+      _id: id,
+      user: req.user._id,
+    });
+
+    // 5. Order မရှိပါက Error ပြပါသည်
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    // 6. Order Detail ကို Response အဖြစ် ပြန်ပေးပါသည်
+    res.status(200).json(order);
+  },
+);
