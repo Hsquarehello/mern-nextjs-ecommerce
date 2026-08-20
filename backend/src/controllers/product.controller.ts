@@ -44,7 +44,10 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (search) {
-    query.name = { $regex: search, $options: "i" };
+    query.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { category: { $regex: search, $options: "i" } },
+    ];
   }
 
   const [products, total] = await Promise.all([
